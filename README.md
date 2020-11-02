@@ -1,1 +1,1 @@
-# MA-NodeJS
+# MA Node.JS course homeworks
