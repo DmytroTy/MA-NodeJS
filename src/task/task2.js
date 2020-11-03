@@ -1,14 +1,14 @@
-function goodWithMaxCost(goods) {
+const goods = require('../../goods');
+
+function goodWithMaxCost(merchandise) {
   function calculateCost(good) {
-    const price = (good.price || good.priceForPair).slice(1);
+    const price = +(good.price || good.priceForPair).slice(1);
     return (good.quantity || 0) * price;
   }
 
-  goods.sort((a, b) => calculateCost(b) - calculateCost(a));
+  merchandise.sort((a, b) => calculateCost(b) - calculateCost(a));
 
-  return goods[0];
+  return merchandise[0];
 }
-
-const goods = require('../../goods');
 
 module.exports = goodWithMaxCost(goods);
