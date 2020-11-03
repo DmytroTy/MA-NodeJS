@@ -1,14 +1,18 @@
 const goods = require('../../goods');
 
-function goodWithMaxCost(merchandise) {
-  function calculateCost(good) {
+function searchGoodWithMaxCost(merchandise) {
+  let maxCost = 0;
+  let goodWithMaxCost;
+  merchandise.forEach((good) => {
     const price = +(good.price || good.priceForPair).slice(1);
-    return (good.quantity || 0) * price;
-  }
+    const cost = (good.quantity || 0) * price;
+    if (cost > maxCost) {
+      maxCost = cost;
+      goodWithMaxCost = good;
+    }
+  });
 
-  merchandise.sort((a, b) => calculateCost(b) - calculateCost(a));
-
-  return merchandise[0];
+  return goodWithMaxCost;
 }
 
-module.exports = goodWithMaxCost(goods);
+module.exports = searchGoodWithMaxCost(goods);
