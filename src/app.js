@@ -1,11 +1,12 @@
-const { task1: filterGoods, task2: goodWithMaxCost, task3 } = require('./task');
-const goods = require('../goods');
+const http = require('http');
+require('dotenv').config();
 
-function boot(merchandise, parameter, value) {
-  const good = filterGoods(merchandise, parameter, value);
-  console.log(good);
-  console.log(task3(good));
-  console.log(goodWithMaxCost);
-}
+const requestHandler = require('./requestHandler');
 
-boot(goods, 'type', 'socks');
+const PORT = Number(process.env.PORT) || 3000;
+const server = http.createServer(requestHandler);
+server.listen(PORT, 'localhost', console.log(`Server starts at port: ${PORT}`));
+
+process.on('uncaughtException', (err) => {
+  console.error(err);
+});
