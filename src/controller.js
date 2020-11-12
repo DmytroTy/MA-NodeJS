@@ -4,7 +4,7 @@ const { task1: filterGoods, task2: goodWithMaxCost, task3 } = require('./task');
 
 const pathToFile = path.resolve(__dirname, '../', 'goods.json');
 
-function readFile() {
+function readFileStorage() {
   const rawdata = fs.readFileSync(pathToFile, 'utf8');
   let goods;
   try {
@@ -17,7 +17,7 @@ function readFile() {
 }
 
 function good(response, queryParams) {
-  const goods = filterGoods(readFile(), queryParams.parameter, queryParams.value);
+  const goods = filterGoods(readFileStorage(), queryParams.parameter, queryParams.value);
   response.write(JSON.stringify(goods));
   response.end();
 }
@@ -28,7 +28,7 @@ function findGoodWithMaxCost(response) {
 }
 
 function standardize(response) {
-  const standard = task3(readFile());
+  const standard = task3(readFileStorage());
   response.write(JSON.stringify(standard));
   response.end();
 }
