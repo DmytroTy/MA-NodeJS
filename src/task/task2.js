@@ -1,9 +1,7 @@
-const goods = require('../../goods');
-
-function searchGoodWithMaxCost(merchandise) {
+function searchGoodWithMaxCost(goods) {
   let maxCost = 0;
   let goodWithMaxCost;
-  merchandise.forEach((good) => {
+  goods.forEach((good) => {
     const price = +(good.price || good.priceForPair).slice(1);
     const cost = (good.quantity || 0) * price;
     if (cost > maxCost) {
@@ -15,4 +13,4 @@ function searchGoodWithMaxCost(merchandise) {
   return goodWithMaxCost;
 }
 
-module.exports = searchGoodWithMaxCost(goods);
+module.exports = searchGoodWithMaxCost;

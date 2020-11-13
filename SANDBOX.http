@@ -15,9 +15,29 @@ POST http://localhost:3000/new-data HTTP/1.1
 content-type: application/json
 
 [
-{
-    "name": "sample",
-    "time": "Wed, 21 Oct 2015 18:27:50 GMT"
-}
+  {
+    "type": "socks",
+    "color": "red",
+    "quantity": 10,
+    "priceForPair": "$3"
+  },
+  {
+    "type": "hat",
+    "color": "red",
+    "quantity": 7,
+    "price": "$5"
+  },
+  {
+    "type": "socks",
+    "color": "red",
+    "quantity": 10,
+    "priceForPair": "$3"
+  },
+  {
+    "type": "hat",
+    "color": "red",
+    "quantity": 1,
+    "price": "$6"
+  }
 ]
 ###
