@@ -1,7 +1,7 @@
 {
   "name": "ma-nodejs-course",
   "version": "1.0.0",
-  "description": "",
+  "description": "homeworks",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js"
@@ -16,6 +16,9 @@
     "url": "https://github.com/DmytroTy/MA-NodeJS/issues"
   },
   "homepage": "https://github.com/DmytroTy/MA-NodeJS#readme",
+  "dependencies": {
+    "dotenv": "^8.2.0"
+  },
   "devDependencies": {
     "eslint": "^7.12.0",
     "eslint-config-airbnb": "^18.2.0",
