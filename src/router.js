@@ -1,4 +1,4 @@
-const { good, goodWithMaxCost, standardize, newData } = require('./controller');
+const { good, findGoodWithMaxCost, standardize, newData, switchStorage } = require('./controller');
 
 function notFound(response) {
   response.statusCode = 404;
@@ -21,8 +21,10 @@ module.exports = (request, response) => {
     return !queryParams.parameter || !queryParams.value
       ? incorrectParameters(response)
       : good(response, queryParams);
-  if (method === 'GET' && url === '/good-with-max-cost') return goodWithMaxCost(response);
+  if (method === 'GET' && url === '/good-with-max-cost') return findGoodWithMaxCost(response);
   if (method === 'GET' && url === '/standardize') return standardize(response);
+  if (method === 'GET' && url.startsWith('/switch?storage='))
+    return switchStorage(response, queryParams);
   if (method === 'POST' && url === '/new-data') return newData(data, response);
   return notFound(response);
 };

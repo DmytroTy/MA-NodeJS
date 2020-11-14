@@ -7,9 +7,9 @@ GET http://localhost:3000/good?parameter=type&value=socks
 ###
 GET http://localhost:3000/standardize
 ###
-GET http://localhost:3000/change?storage=store
+GET http://localhost:3000/switch?storage=store
 ###
-GET http://localhost:3000/change?storage=json
+GET http://localhost:3000/switch?storage=json
 ###
 POST http://localhost:3000/new-data HTTP/1.1
 content-type: application/json

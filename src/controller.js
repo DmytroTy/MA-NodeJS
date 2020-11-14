@@ -4,6 +4,9 @@ const { task1: filterGoods, task2: goodWithMaxCost, task3 } = require('./task');
 
 const pathToFile = path.resolve(__dirname, '../', 'goods.json');
 
+let store = [];
+let storageInJson = true;
+
 function incorrectData(response) {
   response.statusCode = 406;
   response.write(JSON.stringify({ error: '406', message: '406 Incorrect data recived' }));
@@ -16,11 +19,13 @@ function serverError(response) {
   response.end();
 }
 
-function readFileStorage(response) {
-  let rawdata;
+function readStorage(response) {
+  if (!storageInJson) return store;
+
   let goods;
+
   try {
-    rawdata = fs.readFileSync(pathToFile, 'utf8');
+    const rawdata = fs.readFileSync(pathToFile, 'utf8');
     goods = JSON.parse(rawdata);
   } catch (err) {
     console.error(err.message);
@@ -31,21 +36,39 @@ function readFileStorage(response) {
 }
 
 function good(response, queryParams) {
-  const goods = filterGoods(readFileStorage(response), queryParams.parameter, queryParams.value);
+  const goods = filterGoods(readStorage(response), queryParams.parameter, queryParams.value);
   response.write(JSON.stringify(goods));
   response.end();
 }
 
 function findGoodWithMaxCost(response) {
-  const product = goodWithMaxCost(readFileStorage(response));
+  const product = goodWithMaxCost(readStorage(response));
   response.write(JSON.stringify(product));
   response.end();
 }
 
 function standardize(response) {
-  const standard = task3(readFileStorage(response));
+  const standard = task3(readStorage(response));
   response.write(JSON.stringify(standard));
   response.end();
+}
+
+function switchStorage(response, queryParams) {
+  let message;
+  switch (queryParams.storage) {
+    case 'json':
+      storageInJson = true;
+      message = 'Storage is switched to JSON';
+      break;
+    case 'store':
+      storageInJson = false;
+      message = 'Storage is switched to a global variable';
+      break;
+    default:
+      return incorrectData(response);
+  }
+  response.write(JSON.stringify({ message }));
+  return response.end();
 }
 
 function newData(data, response) {
@@ -55,8 +78,10 @@ function newData(data, response) {
     data.some((obj) => !obj.type || !obj.color || (!obj.price && !obj.priceForPair))
   )
     return incorrectData(response);
+
   try {
-    fs.writeFileSync(pathToFile, JSON.stringify(data, null, 1));
+    if (!storageInJson) store = data;
+    else fs.writeFileSync(pathToFile, JSON.stringify(data, null, 1));
   } catch (err) {
     console.error(err.message);
     serverError(response);
@@ -65,4 +90,4 @@ function newData(data, response) {
   return response.end();
 }
 
-module.exports = { good, goodWithMaxCost: findGoodWithMaxCost, standardize, newData };
+module.exports = { good, findGoodWithMaxCost, standardize, newData, switchStorage };
