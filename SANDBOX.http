@@ -1,9 +1,15 @@
 # root
 GET http://localhost:3000/
 ###
-GET http://localhost:3000/good-with-max-cost
+GET http://localhost:3000/goods-with-max-cost
 ###
-GET http://localhost:3000/good?parameter=type&value=socks
+GET http://localhost:3000/goods?parameter=type&value=socks
+###
+GET http://localhost:3000/discount-callback
+###
+GET http://localhost:3000/discount-promise
+###
+GET http://localhost:3000/discount-async-await
 ###
 GET http://localhost:3000/standardize
 ###

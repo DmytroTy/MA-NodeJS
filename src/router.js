@@ -1,4 +1,12 @@
-const { good, goodWithMaxCost, standardize, newData } = require('./controller');
+const {
+  findGoods,
+  findGoodsWithMaxCost,
+  discountCallback,
+  discountPromise,
+  discountAsyncAwait,
+  standardize,
+  newData,
+} = require('./controller');
 
 function notFound(response) {
   response.statusCode = 404;
@@ -17,11 +25,14 @@ module.exports = (request, response) => {
 
   response.setHeader('Content-Type', 'application/json');
 
-  if (method === 'GET' && url.startsWith('/good?'))
+  if (method === 'GET' && url.startsWith('/goods?'))
     return !queryParams.parameter || !queryParams.value
       ? incorrectParameters(response)
-      : good(response, queryParams);
-  if (method === 'GET' && url === '/good-with-max-cost') return goodWithMaxCost(response);
+      : findGoods(response, queryParams);
+  if (method === 'GET' && url === '/goods-with-max-cost') return findGoodsWithMaxCost(response);
+  if (method === 'GET' && url === '/discount-callback') return discountCallback(response);
+  if (method === 'GET' && url === '/discount-promise') return discountPromise(response);
+  if (method === 'GET' && url === '/discount-async-await') return discountAsyncAwait(response);
   if (method === 'GET' && url === '/standardize') return standardize(response);
   if (method === 'POST' && url === '/new-data') return newData(data, response);
   return notFound(response);
