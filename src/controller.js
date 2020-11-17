@@ -156,10 +156,12 @@ function getDiscountPromise(callback) {
 function discountPromise(response) {
   const standard = task3(readFileStorage(response));
   let mapped = 0;
+
   function last() {
     // eslint-disable-next-line no-use-before-define
     if (mapped === standard.length) sendResponse();
   }
+
   const discountedGoods = myMap(standard, (product) => {
     getDiscountPromise((discount) => {
       if (product.type === 'hat')
@@ -186,48 +188,9 @@ function discountPromise(response) {
       }
     });
 
-    /* // Not works
-    (function getDiscountPromise() {
-      generateDiscountPromise()
-        .then((discount) => {
-          if (product.type === 'hat') generateDiscountPromise(discount);
-          else {
-            product.price = `$${+product.price.slice(1) * (1 - discount / 100)}`;
-            mapped++;
-            last();
-          }
-        })
-        .catch((err) => {
-          getDiscountPromise();
-          void err;
-        })
-        .then((discount2, discount) => {
-          if (product.color === 'red') generateDiscountPromise(discount2, discount);
-          else {
-            const correction = (1 - discount / 100) * (1 - discount2 / 100);
-            product.price = `$${+product.price.slice(1) * correction}`;
-            mapped++;
-            last();
-          }
-        })
-        .catch((err) => {
-          getDiscountPromise();
-          void err;
-        })
-        .then((discount3, discount2, discount) => {
-          const correction = (1 - discount / 100) * (1 - discount2 / 100) * (1 - discount3 / 100);
-          product.price = `$${+product.price.slice(1) * correction}`;
-          mapped++;
-          last();
-        })
-        .catch((err) => {
-          getDiscountPromise();
-          void err;
-        });
-    })(); */
-
     return product;
   });
+
   function sendResponse() {
     response.write(JSON.stringify(discountedGoods));
     response.end();
