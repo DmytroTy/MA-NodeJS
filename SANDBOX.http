@@ -11,6 +11,8 @@ GET http://localhost:3000/discount-promise
 ###
 GET http://localhost:3000/discount-async-await
 ###
+GET http://localhost:3000/good?parameter=quantity&value=0
+###
 GET http://localhost:3000/standardize
 ###
 GET http://localhost:3000/change?storage=store
