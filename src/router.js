@@ -6,6 +6,7 @@ const {
   discountAsyncAwait,
   standardize,
   newData,
+  switchStorage,
 } = require('./controller');
 
 function notFound(response) {
@@ -34,6 +35,8 @@ module.exports = (request, response) => {
   if (method === 'GET' && url === '/discount-promise') return discountPromise(response);
   if (method === 'GET' && url === '/discount-async-await') return discountAsyncAwait(response);
   if (method === 'GET' && url === '/standardize') return standardize(response);
+  if (method === 'GET' && url.startsWith('/switch?storage='))
+    return switchStorage(response, queryParams);
   if (method === 'POST' && url === '/new-data') return newData(data, response);
   return notFound(response);
 };

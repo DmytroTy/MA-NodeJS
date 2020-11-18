@@ -10,6 +10,9 @@ const {
 
 const pathToFile = path.resolve(__dirname, '../', 'goods.json');
 
+let store = [];
+let storageInJson = true;
+
 function incorrectData(response) {
   response.statusCode = 406;
   response.write(JSON.stringify({ error: '406', message: '406 Incorrect data recived' }));
@@ -22,11 +25,13 @@ function serverError(response) {
   response.end();
 }
 
-function readFileStorage(response) {
-  let rawdata;
+function readStorage(response) {
+  if (!storageInJson) return store;
+
   let goods;
+
   try {
-    rawdata = fs.readFileSync(pathToFile, 'utf8');
+    const rawdata = fs.readFileSync(pathToFile, 'utf8');
     goods = JSON.parse(rawdata);
   } catch (err) {
     console.error(err.message);
@@ -37,21 +42,39 @@ function readFileStorage(response) {
 }
 
 function findGoods(response, queryParams) {
-  const goods = filterGoods(readFileStorage(response), queryParams.parameter, queryParams.value);
+  const goods = filterGoods(readStorage(response), queryParams.parameter, queryParams.value);
   response.write(JSON.stringify(goods));
   response.end();
 }
 
 function findGoodsWithMaxCost(response) {
-  const product = goodsWithMaxCost(readFileStorage(response));
+  const product = goodsWithMaxCost(readStorage(response));
   response.write(JSON.stringify(product));
   response.end();
 }
 
 function standardize(response) {
-  const standard = task3(readFileStorage(response));
+  const standard = task3(readStorage(response));
   response.write(JSON.stringify(standard));
   response.end();
+}
+
+function switchStorage(response, queryParams) {
+  let message;
+  switch (queryParams.storage) {
+    case 'json':
+      storageInJson = true;
+      message = 'Storage is switched to JSON';
+      break;
+    case 'store':
+      storageInJson = false;
+      message = 'Storage is switched to a global variable';
+      break;
+    default:
+      return incorrectData(response);
+  }
+  response.write(JSON.stringify({ message }));
+  return response.end();
 }
 
 function newData(data, response) {
@@ -61,8 +84,10 @@ function newData(data, response) {
     data.some((obj) => !obj.type || !obj.color || (!obj.price && !obj.priceForPair))
   )
     return incorrectData(response);
+
   try {
-    fs.writeFileSync(pathToFile, JSON.stringify(data, null, 1));
+    if (!storageInJson) store = data;
+    else fs.writeFileSync(pathToFile, JSON.stringify(data, null, 1));
   } catch (err) {
     console.error(err.message);
     serverError(response);
@@ -74,7 +99,7 @@ function newData(data, response) {
 // Homework-03
 
 function discountCallback(response) {
-  const standard = task3(readFileStorage(response));
+  const standard = task3(readStorage(response));
   let mapped = 0;
   function last() {
     // eslint-disable-next-line no-use-before-define
@@ -117,7 +142,7 @@ function discountCallback(response) {
 }
 
 function discountPromise(response) {
-  const standard = task3(readFileStorage(response));
+  const standard = task3(readStorage(response));
   let mapped = 0;
 
   function last() {
@@ -149,7 +174,7 @@ function discountPromise(response) {
 }
 
 async function discountAsyncAwait(response) {
-  const standard = task3(readFileStorage(response));
+  const standard = task3(readStorage(response));
   const discountedGoods = await myMapAsync(standard, async (product) => {
     let discount = getDiscountAsyncAwait();
     const discount2 = getDiscountAsyncAwait();
@@ -176,4 +201,5 @@ module.exports = {
   discountAsyncAwait,
   standardize,
   newData,
+  switchStorage,
 };
