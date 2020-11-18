@@ -96,9 +96,9 @@ function generateDiscount(callback) {
 
 const generateDiscountPromisified = util.promisify(generateDiscount);
 
-function generateDiscountPromise(...args) {
+function generateDiscountPromise() {
   return new Promise((resolve, reject) =>
-    generateDiscount((error, discount) => (error ? reject(error) : resolve(discount, ...args))),
+    generateDiscount((error, discount) => (error ? reject(error) : resolve(discount))),
   );
 }
 
@@ -121,19 +121,21 @@ function discountCallback(response) {
             getDiscountCallback((discount3) => {
               const correction =
                 (1 - discount / 100) * (1 - discount2 / 100) * (1 - discount3 / 100);
-              product.price = `$${+product.price.slice(1) * correction}`;
+              const discont = Math.trunc((1 - correction) * 100);
+              product.discount = `${discont}%`;
               mapped++;
               last();
             });
           else {
             const correction = (1 - discount / 100) * (1 - discount2 / 100);
-            product.price = `$${+product.price.slice(1) * correction}`;
+            const discont = Math.trunc((1 - correction) * 100);
+            product.discount = `${discont}%`;
             mapped++;
             last();
           }
         });
       else {
-        product.price = `$${+product.price.slice(1) * (1 - discount / 100)}`;
+        product.discount = `${discount}%`;
         mapped++;
         last();
       }
@@ -147,10 +149,21 @@ function discountCallback(response) {
   }
 }
 
-function getDiscountPromise(callback) {
+function recursionPromise(times, discounts, callback) {
   generateDiscountPromisified()
-    .then((discount) => callback(discount))
-    .catch(() => getDiscountPromise(callback));
+    .then((discount) => {
+      discounts.push(discount);
+      if (discounts.length < times) recursionPromise(times, discounts, callback);
+      else callback(discounts);
+    })
+    .catch(() => recursionPromise(times, discounts, callback));
+}
+
+function getDiscountPromise(times, callback) {
+  const discounts = [];
+  for (let counter = 0; counter < times; counter++) {
+    recursionPromise(times, discounts, callback);
+  }
 }
 
 function discountPromise(response) {
@@ -159,33 +172,21 @@ function discountPromise(response) {
 
   function last() {
     // eslint-disable-next-line no-use-before-define
-    if (mapped === standard.length) sendResponse();
+    if (mapped === standard.length) setTimeout(sendResponse, 1000);
   }
 
   const discountedGoods = myMap(standard, (product) => {
-    getDiscountPromise((discount) => {
-      if (product.type === 'hat')
-        getDiscountPromise((discount2) => {
-          if (product.color === 'red')
-            getDiscountPromise((discount3) => {
-              const correction =
-                (1 - discount / 100) * (1 - discount2 / 100) * (1 - discount3 / 100);
-              product.price = `$${+product.price.slice(1) * correction}`;
-              mapped++;
-              last();
-            });
-          else {
-            const correction = (1 - discount / 100) * (1 - discount2 / 100);
-            product.price = `$${+product.price.slice(1) * correction}`;
-            mapped++;
-            last();
-          }
-        });
-      else {
-        product.price = `$${+product.price.slice(1) * (1 - discount / 100)}`;
-        mapped++;
-        last();
-      }
+    let times = 1;
+    if (product.type === 'hat')
+      if (product.color === 'red') times = 3;
+      else times = 2;
+
+    getDiscountPromise(times, (discounts) => {
+      const correction = discounts.reduce((before, discount) => before * (1 - discount / 100), 1);
+      const discount = Math.trunc((1 - correction) * 100);
+      product.discount = `${discount}%`;
+      mapped++;
+      last();
     });
 
     return product;
@@ -198,10 +199,8 @@ function discountPromise(response) {
 }
 
 async function getDiscountAsyncAwait() {
-  let discount;
   try {
-    discount = 1 - (await generateDiscountPromise()) / 100;
-    return discount;
+    return await generateDiscountPromise();
   } catch (err) {
     return getDiscountAsyncAwait();
   }
@@ -210,12 +209,16 @@ async function getDiscountAsyncAwait() {
 async function discountAsyncAwait(response) {
   const standard = task3(readFileStorage(response));
   const discountedGoods = await myMapAsync(standard, async (product) => {
-    let discount = await getDiscountAsyncAwait();
+    let discount = getDiscountAsyncAwait();
+    const discount2 = getDiscountAsyncAwait();
+    const discount3 = getDiscountAsyncAwait();
+    let correction;
     if (product.type === 'hat') {
-      discount *= await getDiscountAsyncAwait();
-      if (product.color === 'red') discount *= await getDiscountAsyncAwait();
+      correction = (1 - (await discount) / 100) * (1 - (await discount2) / 100);
+      if (product.color === 'red') correction *= 1 - (await discount3) / 100;
+      discount = Math.trunc((1 - correction) * 100);
     }
-    product.price = `$${+product.price.slice(1) * discount}`;
+    product.discount = `${await discount}%`;
 
     return product;
   });
