@@ -27,7 +27,6 @@ module.exports = (request, response) => {
   response.setHeader('Content-Type', 'application/json');
 
   if (method === 'GET')
-    // eslint-disable-next-line default-case
     switch (true) {
       case url.startsWith('/goods?'):
         return !queryParams.parameter || !queryParams.value
@@ -45,6 +44,8 @@ module.exports = (request, response) => {
         return standardize(response);
       case url.startsWith('/switch?storage='):
         return switchStorage(response, queryParams);
+      default:
+        return notFound(response);
     }
   if (method === 'POST' && url === '/new-data') return newData(data, response);
   return notFound(response);
