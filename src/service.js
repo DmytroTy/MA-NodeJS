@@ -1,22 +1,27 @@
+/* eslint-disable no-extend-native */
 /* eslint-disable no-plusplus */
 const util = require('util');
 
-function myMap(array, callback) {
+function myMap(callback) {
   const result = [];
-  for (let index = 0; index < array.length; index++) {
-    result.push(callback(array[index]));
+  for (let index = 0; index < this.length; index++) {
+    result.push(callback(this[index]));
   }
   return result;
 }
 
-async function myMapAsync(array, callback) {
+Array.prototype.myMap = myMap;
+
+async function myMapAsync(callback) {
   const result = [];
   // eslint-disable-next-line no-restricted-syntax
-  for await (const element of array) {
+  for await (const element of this) {
     result.push(await callback(element));
   }
   return result;
 }
+
+Array.prototype.myMapAsync = myMapAsync;
 
 function generateDiscount(callback) {
   setTimeout(() => {
@@ -64,8 +69,6 @@ async function getDiscountAsyncAwait() {
 }
 
 module.exports = {
-  myMap,
-  myMapAsync,
   getDiscountCallback,
   getDiscountPromise,
   getDiscountAsyncAwait,

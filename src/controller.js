@@ -2,13 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { task1: filterGoods, task2: goodsWithMaxCost, task3 } = require('./task');
-const {
-  myMap,
-  myMapAsync,
-  getDiscountCallback,
-  getDiscountPromise,
-  getDiscountAsyncAwait,
-} = require('./service');
+const { getDiscountCallback, getDiscountPromise, getDiscountAsyncAwait } = require('./service');
 
 const pathToFile = path.resolve(__dirname, '../', 'goods.json');
 
@@ -107,7 +101,7 @@ function discountCallback(response) {
     // eslint-disable-next-line no-use-before-define
     if (mapped === standard.length) sendResponse();
   }
-  const discountedGoods = myMap(standard, (product) => {
+  const discountedGoods = standard.myMap((product) => {
     getDiscountCallback((discount) => {
       if (product.type === 'hat')
         getDiscountCallback((discount2) => {
@@ -152,7 +146,7 @@ function discountPromise(response) {
     if (mapped === standard.length) setTimeout(sendResponse, 1000);
   }
 
-  const discountedGoods = myMap(standard, (product) => {
+  const discountedGoods = standard.myMap((product) => {
     let times = 1;
     if (product.type === 'hat')
       if (product.color === 'red') times = 3;
@@ -178,7 +172,7 @@ function discountPromise(response) {
 async function discountAsyncAwait(response) {
   const standard = task3(readStorage(response));
   try {
-    const discountedGoods = await myMapAsync(standard, async (product) => {
+    const discountedGoods = await standard.myMapAsync(async (product) => {
       let discount = getDiscountAsyncAwait();
       const discount2 = getDiscountAsyncAwait();
       const discount3 = getDiscountAsyncAwait();
