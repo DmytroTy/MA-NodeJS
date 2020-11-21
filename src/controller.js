@@ -141,23 +141,19 @@ function discountPromise(response) {
   const standard = task3(readStorage(response));
   let mapped = 0;
 
-  function last() {
-    // eslint-disable-next-line no-use-before-define
-    if (mapped === standard.length) setTimeout(sendResponse, 1000);
-  }
-
   const discountedGoods = standard.myMap((product) => {
     let times = 1;
     if (product.type === 'hat')
       if (product.color === 'red') times = 3;
       else times = 2;
 
-    getDiscountPromise(times, (discounts) => {
+    getDiscountPromise(times, [], (discounts) => {
       const correction = discounts.reduce((before, discount) => before * (1 - discount / 100), 1);
       const discount = Math.trunc((1 - correction) * 100);
       product.discount = `${discount}%`;
       mapped++;
-      last();
+      // eslint-disable-next-line no-use-before-define
+      if (mapped === standard.length) sendResponse(); // setTimeout(sendResponse, 1000);
     });
 
     return product;

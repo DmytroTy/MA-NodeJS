@@ -43,21 +43,14 @@ function getDiscountCallback(callback) {
   generateDiscount((err, discount) => (err ? getDiscountCallback(callback) : callback(discount)));
 }
 
-function recursionPromise(times, discounts, callback) {
+function getDiscountPromise(times, discounts, callback) {
   generateDiscountPromisified()
     .then((discount) => {
       discounts.push(discount);
-      if (discounts.length < times) recursionPromise(times, discounts, callback);
+      if (discounts.length < times) getDiscountPromise(times, discounts, callback);
       else callback(discounts);
     })
-    .catch(() => recursionPromise(times, discounts, callback));
-}
-
-function getDiscountPromise(times, callback) {
-  const discounts = [];
-  for (let counter = 0; counter < times; counter++) {
-    recursionPromise(times, discounts, callback);
-  }
+    .catch(() => getDiscountPromise(times, discounts, callback));
 }
 
 async function getDiscountAsyncAwait() {
