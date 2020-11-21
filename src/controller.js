@@ -1,12 +1,14 @@
 /* eslint-disable no-plusplus */
 const fs = require('fs');
 const path = require('path');
+const { task1: filterGoods, task2: goodsWithMaxCost, task3 } = require('./task');
 const {
-  task1: filterGoods,
-  task2: goodsWithMaxCost,
-  task3,
-  task4: { myMap, myMapAsync, getDiscountCallback, getDiscountPromise, getDiscountAsyncAwait },
-} = require('./task');
+  myMap,
+  myMapAsync,
+  getDiscountCallback,
+  getDiscountPromise,
+  getDiscountAsyncAwait,
+} = require('./service');
 
 const pathToFile = path.resolve(__dirname, '../', 'goods.json');
 
