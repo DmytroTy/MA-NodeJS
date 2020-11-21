@@ -175,22 +175,27 @@ function discountPromise(response) {
 
 async function discountAsyncAwait(response) {
   const standard = task3(readStorage(response));
-  const discountedGoods = await myMapAsync(standard, async (product) => {
-    let discount = getDiscountAsyncAwait();
-    const discount2 = getDiscountAsyncAwait();
-    const discount3 = getDiscountAsyncAwait();
-    let correction;
-    if (product.type === 'hat') {
-      correction = (1 - (await discount) / 100) * (1 - (await discount2) / 100);
-      if (product.color === 'red') correction *= 1 - (await discount3) / 100;
-      discount = Math.trunc((1 - correction) * 100);
-    }
-    product.discount = `${await discount}%`;
+  try {
+    const discountedGoods = await myMapAsync(standard, async (product) => {
+      let discount = getDiscountAsyncAwait();
+      const discount2 = getDiscountAsyncAwait();
+      const discount3 = getDiscountAsyncAwait();
+      let correction;
+      if (product.type === 'hat') {
+        correction = (1 - (await discount) / 100) * (1 - (await discount2) / 100);
+        if (product.color === 'red') correction *= 1 - (await discount3) / 100;
+        discount = Math.trunc((1 - correction) * 100);
+      }
+      product.discount = `${await discount}%`;
 
-    return product;
-  });
-  response.write(JSON.stringify(discountedGoods));
-  response.end();
+      return product;
+    });
+    response.write(JSON.stringify(discountedGoods));
+    response.end();
+  } catch (err) {
+    console.error(err.message);
+    serverError(response);
+  }
 }
 
 module.exports = {
