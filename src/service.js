@@ -39,8 +39,15 @@ function generateDiscountPromise() {
   );
 }
 
-function getDiscountCallback(callback) {
-  generateDiscount((err, discount) => (err ? getDiscountCallback(callback) : callback(discount)));
+function getDiscountCallback(times, discounts, callback) {
+  generateDiscount((err, discount) => {
+    if (err) return getDiscountCallback(times, discounts, callback);
+
+    discounts.push(discount);
+    if (discounts.length < times) getDiscountCallback(times, discounts, callback);
+    else callback(discounts);
+    return true;
+  });
 }
 
 function getDiscountPromise(times, discounts, callback) {

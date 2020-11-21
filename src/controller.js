@@ -24,17 +24,13 @@ function serverError(response) {
 function readStorage(response) {
   if (!storageInJson) return store;
 
-  let goods;
-
   try {
     const rawdata = fs.readFileSync(pathToFile, 'utf8');
-    goods = JSON.parse(rawdata);
+    return JSON.parse(rawdata);
   } catch (err) {
     console.error(err.message);
-    serverError(response);
+    return serverError(response);
   }
-
-  return goods;
 }
 
 function findGoods(response, queryParams) {
@@ -86,7 +82,7 @@ function newData(data, response) {
     else fs.writeFileSync(pathToFile, JSON.stringify(data, null, 1));
   } catch (err) {
     console.error(err.message);
-    serverError(response);
+    return serverError(response);
   }
   response.write(JSON.stringify(data));
   return response.end();
@@ -97,40 +93,25 @@ function newData(data, response) {
 function discountCallback(response) {
   const standard = task3(readStorage(response));
   let mapped = 0;
-  function last() {
-    // eslint-disable-next-line no-use-before-define
-    if (mapped === standard.length) sendResponse();
-  }
+
   const discountedGoods = standard.myMap((product) => {
-    getDiscountCallback((discount) => {
-      if (product.type === 'hat')
-        getDiscountCallback((discount2) => {
-          if (product.color === 'red')
-            getDiscountCallback((discount3) => {
-              const correction =
-                (1 - discount / 100) * (1 - discount2 / 100) * (1 - discount3 / 100);
-              const discont = Math.trunc((1 - correction) * 100);
-              product.discount = `${discont}%`;
-              mapped++;
-              last();
-            });
-          else {
-            const correction = (1 - discount / 100) * (1 - discount2 / 100);
-            const discont = Math.trunc((1 - correction) * 100);
-            product.discount = `${discont}%`;
-            mapped++;
-            last();
-          }
-        });
-      else {
-        product.discount = `${discount}%`;
-        mapped++;
-        last();
-      }
+    let times = 1;
+    if (product.type === 'hat')
+      if (product.color === 'red') times = 3;
+      else times = 2;
+
+    getDiscountCallback(times, [], (discounts) => {
+      const correction = discounts.reduce((before, discount) => before * (1 - discount / 100), 1);
+      const discount = Math.trunc((1 - correction) * 100);
+      product.discount = `${discount}%`;
+      mapped++;
+      // eslint-disable-next-line no-use-before-define
+      if (mapped === standard.length) sendResponse();
     });
 
     return product;
   });
+
   function sendResponse() {
     response.write(JSON.stringify(discountedGoods));
     response.end();
@@ -153,7 +134,7 @@ function discountPromise(response) {
       product.discount = `${discount}%`;
       mapped++;
       // eslint-disable-next-line no-use-before-define
-      if (mapped === standard.length) sendResponse(); // setTimeout(sendResponse, 1000);
+      if (mapped === standard.length) sendResponse();
     });
 
     return product;
@@ -182,6 +163,7 @@ async function discountAsyncAwait(response) {
 
       return product;
     });
+
     response.write(JSON.stringify(discountedGoods));
     response.end();
   } catch (err) {
