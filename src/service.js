@@ -14,9 +14,13 @@ Array.prototype.myMap = myMap;
 
 async function myMapAsync(callback) {
   const result = [];
-  // eslint-disable-next-line no-restricted-syntax
-  for await (const element of this) {
-    result.push(await callback(element));
+  try {
+    // eslint-disable-next-line no-restricted-syntax
+    for await (const element of this) {
+      result.push(await callback(element));
+    }
+  } catch (err) {
+    console.error(err);
   }
   return result;
 }
