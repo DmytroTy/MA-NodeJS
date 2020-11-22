@@ -1,4 +1,13 @@
-const { good, goodWithMaxCost, standardize, newData } = require('./controller');
+const {
+  findGoods,
+  findGoodsWithMaxCost,
+  discountCallback,
+  discountPromise,
+  discountAsyncAwait,
+  standardize,
+  newData,
+  switchStorage,
+} = require('./controller');
 
 function notFound(response) {
   response.statusCode = 404;
@@ -17,12 +26,27 @@ module.exports = (request, response) => {
 
   response.setHeader('Content-Type', 'application/json');
 
-  if (method === 'GET' && url.startsWith('/good?'))
-    return !queryParams.parameter || !queryParams.value
-      ? incorrectParameters(response)
-      : good(response, queryParams);
-  if (method === 'GET' && url === '/good-with-max-cost') return goodWithMaxCost(response);
-  if (method === 'GET' && url === '/standardize') return standardize(response);
+  if (method === 'GET')
+    switch (true) {
+      case url.startsWith('/goods?'):
+        return !queryParams.parameter || !queryParams.value
+          ? incorrectParameters(response)
+          : findGoods(response, queryParams);
+      case url === '/goods-with-max-cost':
+        return findGoodsWithMaxCost(response);
+      case url === '/discount-callback':
+        return discountCallback(response);
+      case url === '/discount-promise':
+        return discountPromise(response);
+      case url === '/discount-async-await':
+        return discountAsyncAwait(response);
+      case url === '/standardize':
+        return standardize(response);
+      case url.startsWith('/switch?storage='):
+        return switchStorage(response, queryParams);
+      default:
+        return notFound(response);
+    }
   if (method === 'POST' && url === '/new-data') return newData(data, response);
   return notFound(response);
 };

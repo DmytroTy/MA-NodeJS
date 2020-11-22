@@ -1,8 +1,13 @@
+/* eslint-disable no-plusplus */
 const fs = require('fs');
 const path = require('path');
-const { task1: filterGoods, task2: goodWithMaxCost, task3 } = require('./task');
+const { task1: filterGoods, task2: goodsWithMaxCost, task3 } = require('./task');
+const { getDiscountCallback, getDiscountPromise, getDiscountAsyncAwait } = require('./service');
 
 const pathToFile = path.resolve(__dirname, '../', 'goods.json');
+
+let store = [];
+let storageInJson = true;
 
 function incorrectData(response) {
   response.statusCode = 406;
@@ -16,36 +21,52 @@ function serverError(response) {
   response.end();
 }
 
-function readFileStorage(response) {
-  let rawdata;
-  let goods;
+function readStorage(response) {
+  if (!storageInJson) return store;
+
   try {
-    rawdata = fs.readFileSync(pathToFile, 'utf8');
-    goods = JSON.parse(rawdata);
+    const rawdata = fs.readFileSync(pathToFile, 'utf8');
+    return JSON.parse(rawdata);
   } catch (err) {
     console.error(err.message);
-    serverError(response);
+    return serverError(response);
   }
-
-  return goods;
 }
 
-function good(response, queryParams) {
-  const goods = filterGoods(readFileStorage(response), queryParams.parameter, queryParams.value);
+function findGoods(response, queryParams) {
+  const goods = filterGoods(readStorage(response), queryParams.parameter, queryParams.value);
   response.write(JSON.stringify(goods));
   response.end();
 }
 
-function findGoodWithMaxCost(response) {
-  const product = goodWithMaxCost(readFileStorage(response));
+function findGoodsWithMaxCost(response) {
+  const product = goodsWithMaxCost(readStorage(response));
   response.write(JSON.stringify(product));
   response.end();
 }
 
 function standardize(response) {
-  const standard = task3(readFileStorage(response));
+  const standard = task3(readStorage(response));
   response.write(JSON.stringify(standard));
   response.end();
+}
+
+function switchStorage(response, queryParams) {
+  let message;
+  switch (queryParams.storage) {
+    case 'json':
+      storageInJson = true;
+      message = 'Storage is switched to JSON';
+      break;
+    case 'store':
+      storageInJson = false;
+      message = 'Storage is switched to a global variable';
+      break;
+    default:
+      return incorrectData(response);
+  }
+  response.write(JSON.stringify({ message }));
+  return response.end();
 }
 
 function newData(data, response) {
@@ -55,14 +76,109 @@ function newData(data, response) {
     data.some((obj) => !obj.type || !obj.color || (!obj.price && !obj.priceForPair))
   )
     return incorrectData(response);
+
   try {
-    fs.writeFileSync(pathToFile, JSON.stringify(data, null, 1));
+    if (!storageInJson) store = data;
+    else fs.writeFileSync(pathToFile, JSON.stringify(data, null, 1));
   } catch (err) {
     console.error(err.message);
-    serverError(response);
+    return serverError(response);
   }
   response.write(JSON.stringify(data));
   return response.end();
 }
 
-module.exports = { good, goodWithMaxCost: findGoodWithMaxCost, standardize, newData };
+// Homework-03
+
+function discountCallback(response) {
+  const standard = task3(readStorage(response));
+  let mapped = 0;
+
+  const discountedGoods = standard.myMap((product) => {
+    let times = 1;
+    if (product.type === 'hat')
+      if (product.color === 'red') times = 3;
+      else times = 2;
+
+    getDiscountCallback(times, [], (discounts) => {
+      const correction = discounts.reduce((before, discount) => before * (1 - discount / 100), 1);
+      const discount = Math.trunc((1 - correction) * 100);
+      product.discount = `${discount}%`;
+      mapped++;
+      // eslint-disable-next-line no-use-before-define
+      if (mapped === standard.length) sendResponse();
+    });
+
+    return product;
+  });
+
+  function sendResponse() {
+    response.write(JSON.stringify(discountedGoods));
+    response.end();
+  }
+}
+
+function discountPromise(response) {
+  const standard = task3(readStorage(response));
+  let mapped = 0;
+
+  const discountedGoods = standard.myMap((product) => {
+    let times = 1;
+    if (product.type === 'hat')
+      if (product.color === 'red') times = 3;
+      else times = 2;
+
+    getDiscountPromise(times, [], (discounts) => {
+      const correction = discounts.reduce((before, discount) => before * (1 - discount / 100), 1);
+      const discount = Math.trunc((1 - correction) * 100);
+      product.discount = `${discount}%`;
+      mapped++;
+      // eslint-disable-next-line no-use-before-define
+      if (mapped === standard.length) sendResponse();
+    });
+
+    return product;
+  });
+
+  function sendResponse() {
+    response.write(JSON.stringify(discountedGoods));
+    response.end();
+  }
+}
+
+async function discountAsyncAwait(response) {
+  const standard = task3(readStorage(response));
+  try {
+    const discountedGoods = await standard.myMapAsync(async (product) => {
+      let discount = getDiscountAsyncAwait();
+      const discount2 = getDiscountAsyncAwait();
+      const discount3 = getDiscountAsyncAwait();
+      let correction;
+      if (product.type === 'hat') {
+        correction = (1 - (await discount) / 100) * (1 - (await discount2) / 100);
+        if (product.color === 'red') correction *= 1 - (await discount3) / 100;
+        discount = Math.trunc((1 - correction) * 100);
+      }
+      product.discount = `${await discount}%`;
+
+      return product;
+    });
+
+    response.write(JSON.stringify(discountedGoods));
+    response.end();
+  } catch (err) {
+    console.error(err.message);
+    serverError(response);
+  }
+}
+
+module.exports = {
+  findGoods,
+  findGoodsWithMaxCost,
+  discountCallback,
+  discountPromise,
+  discountAsyncAwait,
+  standardize,
+  newData,
+  switchStorage,
+};
