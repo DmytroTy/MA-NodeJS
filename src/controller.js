@@ -1,8 +1,17 @@
 /* eslint-disable no-plusplus */
 const fs = require('fs');
 const path = require('path');
+const { promisify } = require('util');
+const { createGunzip } = require('zlib');
+const { pipeline } = require('stream');
+const { nanoid } = require('nanoid');
 const { task1: filterGoods, task2: goodsWithMaxCost, task3 } = require('./task');
-const { getDiscountCallback, getDiscountPromise, getDiscountAsyncAwait } = require('./service');
+const {
+  getDiscountCallback,
+  getDiscountPromise,
+  getDiscountAsyncAwait,
+  createCsvToJson,
+} = require('./service');
 
 const pathToFile = path.resolve(__dirname, '../', 'goods.json');
 
@@ -172,6 +181,25 @@ async function discountAsyncAwait(response) {
   }
 }
 
+const promisifiedPipeline = promisify(pipeline);
+
+async function uploadCsv(inputStream) {
+  const gunzip = createGunzip();
+
+  const timestamp = Date.now();
+  const id = nanoid(5);
+  const filePath = `./upload/${timestamp}_${id}.json`;
+  const outputStream = fs.createWriteStream(filePath);
+
+  const csvToJson = createCsvToJson();
+
+  try {
+    await promisifiedPipeline(inputStream, gunzip, csvToJson, outputStream);
+  } catch (err) {
+    console.error('CSV pipeline failed', err);
+  }
+}
+
 module.exports = {
   findGoods,
   findGoodsWithMaxCost,
@@ -181,4 +209,5 @@ module.exports = {
   standardize,
   newData,
   switchStorage,
+  uploadCsv,
 };

@@ -1,27 +1,33 @@
 const { parse: parseQuery } = require('querystring');
-const router = require('./router');
+const { handleRoutes, handleStreamRoutes } = require('./router');
 
 module.exports = async (request, response) => {
   const parsedUrl = new URL(request.url, process.env.ORIGIN);
   const queryParams = parseQuery(parsedUrl.search.slice(1));
 
-  let data = '';
+  if (request.headers['content-type'] === 'application/gzip') {
+    handleStreamRoutes(request, response).catch((err) => console.error('CSV handler failed', err));
+    return;
+  }
+
+  const bodyChunks = [];
 
   request
     .on('error', (err) => {
       console.error(err.message);
     })
     .on('data', (chunk) => {
-      data += chunk;
+      bodyChunks.push(chunk);
     })
     .on('end', () => {
-      let body;
+      let body = Buffer.concat(bodyChunks).toString();
       try {
-        body = data ? JSON.parse(data) : {};
+        body = body ? JSON.parse(body) : {};
       } catch (err) {
         console.error(err.message);
       }
 
-      router({ ...request, body, queryParams }, response);
+      const customRequest = { ...request, body, queryParams };
+      handleRoutes(customRequest, response);
     });
 };

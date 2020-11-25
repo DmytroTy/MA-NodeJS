@@ -1,6 +1,7 @@
 /* eslint-disable no-extend-native */
 /* eslint-disable no-plusplus */
-const util = require('util');
+const { promisify } = require('util');
+const { Transform } = require('stream');
 
 function myMap(callback) {
   const result = [];
@@ -35,12 +36,12 @@ function generateDiscount(callback) {
   }, 50);
 }
 
-const generateDiscountPromisified = util.promisify(generateDiscount);
+const generateDiscountPromisified = promisify(generateDiscount);
 
 function generateDiscountPromise() {
-  return new Promise((resolve, reject) =>
-    generateDiscount((error, discount) => (error ? reject(error) : resolve(discount))),
-  );
+  return new Promise((resolve, reject) => {
+    generateDiscount((error, discount) => (error ? reject(error) : resolve(discount)));
+  });
 }
 
 function getDiscountCallback(times, discounts, callback) {
@@ -72,8 +73,55 @@ async function getDiscountAsyncAwait() {
   }
 }
 
+function createCsvToJson() {
+  let isFirst = true;
+  let head;
+  let last = '';
+
+  const transform = (chunk, encoding, callback) => {
+    let result = '';
+    let goods = chunk.toString().split('\n');
+
+    if (isFirst) {
+      head = goods.shift().split(',');
+      const value = goods.shift().split(',');
+      result =
+        `[\n  {"${head[0]}": "${value[0]}", "${head[1]}": "${value[1]}", ` +
+        `"${head[2]}": ${value[2]}, "${head[3]}": ${value[3]}}`;
+      isFirst = false;
+    }
+    goods.unshift(...(last + goods.shift()).split('\n'));
+    last = goods.pop();
+
+    goods = goods.map((str) => {
+      const value = str.split(',');
+      return (
+        `,\n  {"${head[0]}": "${value[0]}", "${head[1]}": "${value[1]}", ` +
+        `"${head[2]}": ${value[2]}, "${head[3]}": ${value[3]}}`
+      );
+    });
+
+    result += goods.join('');
+
+    callback(null, result);
+  };
+
+  const flush = (callback) => {
+    /* const value = last.split(',');
+    const result =
+      `  {"${head[0]}": "${value[0]}", "${head[1]}": "${value[1]}", ` +
+      `"${head[2]}": ${value[2]}, "${head[3]}": ${value[3]}, "${head[4]}": ${value[4]}}\n]`; */
+
+    const result = '\n]';
+    callback(null, result);
+  };
+
+  return new Transform({ transform, flush });
+}
+
 module.exports = {
   getDiscountCallback,
   getDiscountPromise,
   getDiscountAsyncAwait,
+  createCsvToJson,
 };
