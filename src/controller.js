@@ -200,6 +200,18 @@ async function uploadCsv(inputStream) {
   }
 }
 
+function getStores(response) {
+  fs.readdir('./upload', (err, files) => {
+    if (err) {
+      console.error(err);
+      return serverError(response);
+    }
+
+    response.write(JSON.stringify(files));
+    return response.end();
+  });
+}
+
 module.exports = {
   findGoods,
   findGoodsWithMaxCost,
@@ -207,6 +219,7 @@ module.exports = {
   discountPromise,
   discountAsyncAwait,
   standardize,
+  getStores,
   newData,
   switchStorage,
   uploadCsv,

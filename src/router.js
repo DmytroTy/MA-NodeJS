@@ -5,6 +5,7 @@ const {
   discountPromise,
   discountAsyncAwait,
   standardize,
+  getStores,
   newData,
   switchStorage,
   uploadCsv,
@@ -43,6 +44,8 @@ function handleRoutes(request, response) {
         return discountAsyncAwait(response);
       case url === '/standardize':
         return standardize(response);
+      case url === '/stores-csv':
+        return getStores(response);
       case url.startsWith('/switch?storage='):
         return switchStorage(response, queryParams);
       default:
