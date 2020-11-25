@@ -8,6 +8,7 @@ const {
   getStores,
   newData,
   switchStorage,
+  optimizeCsv,
   uploadCsv,
 } = require('./controller');
 
@@ -52,6 +53,9 @@ function handleRoutes(request, response) {
         return notFound(response);
     }
   if (method === 'POST' && url === '/new-data') return newData(data, response);
+  if (method === 'PUT' && url.startsWith('/stores-csv/optimize/'))
+    return optimizeCsv(url, response);
+
   return notFound(response);
 }
 

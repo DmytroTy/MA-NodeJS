@@ -212,6 +212,61 @@ function getStores(response) {
   });
 }
 
+async function optimizeCsv(url, response) {
+  const fileName = url.slice(url.lastIndexOf('/') + 1);
+  let filePath = path.resolve('./upload/', fileName);
+
+  const streamReading = fs.createReadStream(filePath);
+
+  const optimized = new Map();
+  let isFirst = true;
+  let last = '';
+
+  streamReading.on('data', (chunk) => {
+    const goods = chunk.toString().split('\n');
+
+    if (isFirst) {
+      goods.shift();
+      isFirst = false;
+    }
+    goods.unshift(...(last + goods.shift()).split('\n'));
+    last = goods.pop();
+
+    goods.forEach((str) => {
+      let strNew;
+      if (str.charAt(str.length - 1) !== ',') strNew = str.slice(2);
+      else strNew = str.slice(2, str.length - 1);
+
+      const product = JSON.parse(strNew);
+      const index = `${product.type}_${product.color}_${product.price}`;
+
+      if (!optimized.has(index)) optimized.set(index, product);
+      else optimized.get(index).quantity += product.quantity;
+    });
+  });
+
+  streamReading.on('end', () => {
+    const result = [];
+    let totalQuantity = 0;
+    // eslint-disable-next-line no-restricted-syntax
+    for (const [, product] of optimized) {
+      result.push(product);
+      totalQuantity += product.quantity;
+    }
+    filePath = path.resolve('./upload/optimized/', fileName);
+    fs.writeFile(filePath, JSON.stringify(result, null, 1), (err) => {
+      if (err) {
+        console.error(err);
+        return serverError(response);
+      }
+      response.write(JSON.stringify({ totalQuantity }));
+      return response.end();
+    });
+  });
+
+  streamReading.on('error', (err) => console.error(err));
+}
+
 module.exports = {
   findGoods,
   findGoodsWithMaxCost,
@@ -222,5 +277,6 @@ module.exports = {
   getStores,
   newData,
   switchStorage,
+  optimizeCsv,
   uploadCsv,
 };
