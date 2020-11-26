@@ -1,14 +1,16 @@
 const http = require('http');
 require('dotenv').config();
-const requestHandler = require('./requestHandler');
+const requestHandler = require('./server/requestHandler');
 
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || 'localhost';
 const server = http.createServer(requestHandler);
-server.listen(PORT, HOST, () => {
-  // ? (${process.env.NODE_ENV})
-  console.log(`Server started: ${server.address().address}:${server.address().port}`);
-});
+
+(function boot() {
+  server.listen(PORT, HOST, () => {
+    console.log(`Server started: ${server.address().address}:${server.address().port}`);
+  });
+})();
 
 function exitHandler(error) {
   if (error) console.error(error);

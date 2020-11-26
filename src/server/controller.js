@@ -5,15 +5,16 @@ const { promisify } = require('util');
 const { createGunzip } = require('zlib');
 const { pipeline } = require('stream');
 const { nanoid } = require('nanoid');
-const { task1: filterGoods, task2: goodsWithMaxCost, task3 } = require('./task');
+const { task1: filterGoods, task2: goodsWithMaxCost, task3 } = require('../task');
 const {
   getDiscountCallback,
   getDiscountPromise,
   getDiscountAsyncAwait,
   createCsvToJson,
+  csvOptimization,
 } = require('./service');
 
-const pathToFile = path.resolve(__dirname, '../', 'goods.json');
+const pathToFile = path.resolve(__dirname, '../../', 'goods.json');
 
 let store = [];
 let storageInJson = true;
@@ -215,74 +216,16 @@ function getStores(response) {
   });
 }
 
-function optimizeCsv(url, response) {
+async function optimizeCsv(url, response) {
   const fileName = url.slice(url.lastIndexOf('/') + 1);
-  let filePath = path.resolve('./upload/', fileName);
-
-  const streamReading = fs.createReadStream(filePath, 'utf8');
-
-  const optimized = new Map();
-  let isFirst = true;
-  let last = '';
-
-  streamReading.on('data', (chunk) => {
-    const goods = chunk.split('\n');
-
-    if (isFirst) {
-      goods.shift();
-      isFirst = false;
-    }
-    goods.unshift(...(last + goods.shift()).split('\n'));
-    last = goods.pop();
-
-    goods.forEach((str) => {
-      let strNew;
-      if (str.charAt(str.length - 1) !== ',') strNew = str.slice(3, -1);
-      else strNew = str.slice(3, str.length - 2);
-
-      let value = strNew.split(',');
-      value = value.map((strI) => strI.slice(strI.indexOf(':') + 2));
-      value[0] = value[0].slice(1, -1);
-      value[1] = value[1].slice(1, -1);
-      value[2] = Number(value[2]);
-      value[3] = Number(value[3]);
-
-      const product = { type: value[0], color: value[1], quantity: value[2], price: value[3] };
-      const index = `${product.type}_${product.color}_${product.price}`;
-
-      if (!optimized.has(index)) optimized.set(index, product);
-      else optimized.get(index).quantity += product.quantity;
-    });
-  });
-
-  streamReading.on('end', () => {
-    let result = [];
-    let totalQuantity = 0;
-    // eslint-disable-next-line no-restricted-syntax
-    for (const [, product] of optimized) {
-      result.push(
-        `  {"type": "${product.type}", "color": "${product.color}", ` +
-          `"quantity": ${product.quantity}, "price": ${product.price}}`,
-      );
-      totalQuantity += product.quantity;
-    }
-    result = `[\n${result.join(',\n')}\n]`;
-    filePath = path.resolve('./upload/optimized/', fileName);
-
-    fs.writeFile(filePath, result, (err) => {
-      if (err) {
-        console.error('Failed to write file!', err);
-        return serverError(response);
-      }
-      response.write(JSON.stringify({ totalQuantity }));
-      return response.end();
-    });
-  });
-
-  streamReading.on('error', (err) => {
-    console.error('Failed to read file!', err);
-    return serverError(response);
-  });
+  try {
+    const totalQuantity = await csvOptimization(fileName);
+    response.write(JSON.stringify({ totalQuantity }));
+    response.end();
+  } catch (err) {
+    console.error('CSV optimization failed!', err);
+    serverError(response);
+  }
 }
 
 module.exports = {
