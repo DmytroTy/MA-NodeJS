@@ -203,16 +203,19 @@ async function uploadCsv(inputStream) {
 function getStores(response) {
   fs.readdir('./upload', (err, files) => {
     if (err) {
-      console.error(err);
+      console.error('Failed to read folder!', err);
       return serverError(response);
     }
 
+    // ? files.pop();
+    const index = files.indexOf('optimized');
+    if (index !== -1) files.splice(index, 1);
     response.write(JSON.stringify(files));
     return response.end();
   });
 }
 
-async function optimizeCsv(url, response) {
+function optimizeCsv(url, response) {
   const fileName = url.slice(url.lastIndexOf('/') + 1);
   let filePath = path.resolve('./upload/', fileName);
 
@@ -233,15 +236,20 @@ async function optimizeCsv(url, response) {
     last = goods.pop();
 
     goods.forEach((str) => {
-      let strNew;
-      if (str.charAt(str.length - 1) !== ',') strNew = str.slice(2);
-      else strNew = str.slice(2, str.length - 1);
+      try {
+        let strNew;
+        if (str.charAt(str.length - 1) !== ',') strNew = str.slice(2);
+        else strNew = str.slice(2, str.length - 1);
 
-      const product = JSON.parse(strNew);
-      const index = `${product.type}_${product.color}_${product.price}`;
+        const product = JSON.parse(strNew);
+        const index = `${product.type}_${product.color}_${product.price}`;
 
-      if (!optimized.has(index)) optimized.set(index, product);
-      else optimized.get(index).quantity += product.quantity;
+        if (!optimized.has(index)) optimized.set(index, product);
+        else optimized.get(index).quantity += product.quantity;
+      } catch (err) {
+        console.error('Failed to parse JSON!', err);
+        serverError(response);
+      }
     });
   });
 
@@ -256,7 +264,7 @@ async function optimizeCsv(url, response) {
     filePath = path.resolve('./upload/optimized/', fileName);
     fs.writeFile(filePath, JSON.stringify(result, null, 1), (err) => {
       if (err) {
-        console.error(err);
+        console.error('Failed to write file!', err);
         return serverError(response);
       }
       response.write(JSON.stringify({ totalQuantity }));
@@ -264,7 +272,10 @@ async function optimizeCsv(url, response) {
     });
   });
 
-  streamReading.on('error', (err) => console.error(err));
+  streamReading.on('error', (err) => {
+    console.error('Failed to read file!', err);
+    return serverError(response);
+  });
 }
 
 module.exports = {

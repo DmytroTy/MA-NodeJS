@@ -84,10 +84,7 @@ function createCsvToJson() {
 
     if (isFirst) {
       head = goods.shift().split(',');
-      const value = goods.shift().split(',');
-      result =
-        `[\n  {"${head[0]}": "${value[0]}", "${head[1]}": "${value[1]}", ` +
-        `"${head[2]}": ${value[2]}, "${head[3]}": ${value[3]}}`;
+      result = '[\n';
       isFirst = false;
     }
     goods.unshift(...(last + goods.shift()).split('\n'));
@@ -96,25 +93,17 @@ function createCsvToJson() {
     goods = goods.map((str) => {
       const value = str.split(',');
       return (
-        `,\n  {"${head[0]}": "${value[0]}", "${head[1]}": "${value[1]}", ` +
+        `  {"${head[0]}": "${value[0]}", "${head[1]}": "${value[1]}", ` +
         `"${head[2]}": ${value[2]}, "${head[3]}": ${value[3]}}`
       );
     });
 
-    result += goods.join('');
+    result += goods.join(',\n');
 
     callback(null, result);
   };
 
-  const flush = (callback) => {
-    /* const value = last.split(',');
-    const result =
-      `  {"${head[0]}": "${value[0]}", "${head[1]}": "${value[1]}", ` +
-      `"${head[2]}": ${value[2]}, "${head[3]}": ${value[3]}, "${head[4]}": ${value[4]}}\n]`; */
-
-    const result = '\n]';
-    callback(null, result);
-  };
+  const flush = (callback) => callback(null, '\n]');
 
   return new Transform({ transform, flush });
 }
