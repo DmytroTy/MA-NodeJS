@@ -1,9 +1,12 @@
+/* eslint-disable no-await-in-loop */
 /* eslint-disable no-extend-native */
 /* eslint-disable no-plusplus */
 const { promisify } = require('util');
 const { Transform } = require('stream');
 const fs = require('fs');
 const path = require('path');
+
+const fsPromises = fs.promises;
 
 function myMap(callback) {
   const result = [];
@@ -197,10 +200,35 @@ function csvOptimization(fileName) {
   });
 }
 
+function autoOptimizationCsv() {
+  fs.readdir('./upload', async (err, files) => {
+    if (err) console.error('Failed to read folder!', err);
+
+    const index = files.indexOf('optimized');
+    if (index !== -1) files.splice(index, 1);
+    for (let i = 0; i < files.length; i++) {
+      try {
+        let isOptimized;
+        try {
+          await fsPromises.access(`./upload/optimized/${files[i]}`);
+          isOptimized = true;
+        } catch (error) {
+          console.log(error.message);
+          isOptimized = false;
+        }
+        if (!isOptimized) await csvOptimization(files[i]);
+      } catch (error) {
+        console.error('CSV optimization failed!', error);
+      }
+    }
+  });
+}
+
 module.exports = {
   getDiscountCallback,
   getDiscountPromise,
   getDiscountAsyncAwait,
   createCsvToJson,
   csvOptimization,
+  autoOptimizationCsv,
 };

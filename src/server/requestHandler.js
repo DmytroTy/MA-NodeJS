@@ -2,7 +2,7 @@ const { parse: parseQuery } = require('querystring');
 const { handleRoutes, handleStreamRoutes } = require('./router');
 
 module.exports = async (request, response) => {
-  const parsedUrl = new URL(request.url, process.env.ORIGIN);
+  const parsedUrl = new URL(request.url, process.env.ORIGIN || 'http://localhost:3000');
   const queryParams = parseQuery(parsedUrl.search.slice(1));
 
   if (request.headers['content-type'] === 'application/gzip') {

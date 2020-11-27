@@ -1,21 +1,28 @@
 const http = require('http');
 require('dotenv').config();
 const requestHandler = require('./server/requestHandler');
+const { autoOptimizationCsv } = require('./server/service');
 
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || 'localhost';
+const INTERVAL_OPTIMIZATION = Number(process.env.INTERVAL_OPTIMIZATION) || 600000;
+let intervalID;
 const server = http.createServer(requestHandler);
 
 (function boot() {
   server.listen(PORT, HOST, () => {
     console.log(`Server started: ${server.address().address}:${server.address().port}`);
   });
+
+  intervalID = setInterval(autoOptimizationCsv, INTERVAL_OPTIMIZATION);
 })();
 
 function exitHandler(error) {
   if (error) console.error(error);
 
   console.log('Gracefully stopping...');
+  clearInterval(intervalID);
+
   server.close((err) => {
     if (err) {
       console.error(err, 'Failed to close server!');
