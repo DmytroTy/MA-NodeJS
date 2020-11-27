@@ -180,6 +180,12 @@ function csvOptimization(fileName) {
           return reject(err);
         }
         console.log(`Successful CSV file optimization. Total quantity = ${totalQuantity}`);
+
+        filePath = path.resolve('./upload/', fileName);
+        fs.rm(filePath, (error) => {
+          if (error) console.error(`Failed to delete file ${filePath}!`, error);
+        });
+
         return resolve(totalQuantity);
       });
     });
