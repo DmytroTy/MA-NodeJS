@@ -218,13 +218,16 @@ function getStores(response) {
 
 async function optimizeCsv(url, response) {
   const fileName = url.slice(url.lastIndexOf('/') + 1);
+  response.write(JSON.stringify({ status: '202 Accepted' }));
+  response.end();
   try {
-    const totalQuantity = await csvOptimization(fileName);
+    await csvOptimization(fileName);
+    /* const totalQuantity = await csvOptimization(fileName);
     response.write(JSON.stringify({ totalQuantity }));
-    response.end();
+    response.end(); */
   } catch (err) {
     console.error('CSV optimization failed!', err);
-    serverError(response);
+    // serverError(response);
   }
 }
 

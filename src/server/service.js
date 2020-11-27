@@ -81,7 +81,7 @@ function createCsvToJson() {
   let last = '';
 
   const transform = (chunk, encoding, callback) => {
-    let result = '';
+    let result = ',\n';
     let goods = chunk.toString().split('\n');
 
     if (isFirst) {
@@ -100,7 +100,8 @@ function createCsvToJson() {
       );
     });
 
-    result += goods.join(',\n');
+    if (goods.length > 0) result += goods.join(',\n');
+    else result = '';
 
     callback(null, result);
   };
@@ -178,6 +179,7 @@ function csvOptimization(fileName) {
           console.error('Failed to write file!', err);
           return reject(err);
         }
+        console.log(`Successful CSV file optimization. Total quantity = ${totalQuantity}`);
         return resolve(totalQuantity);
       });
     });
