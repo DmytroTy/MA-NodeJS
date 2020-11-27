@@ -213,10 +213,13 @@ function autoOptimizationCsv() {
           await fsPromises.access(`./upload/optimized/${files[i]}`);
           isOptimized = true;
         } catch (error) {
-          console.log(error.message);
           isOptimized = false;
         }
         if (!isOptimized) await csvOptimization(files[i]);
+        else
+          fs.rm(`./upload/${files[i]}`, (error) => {
+            if (error) console.error(`Failed to delete file ./upload/${files[i]}!`, error);
+          });
       } catch (error) {
         console.error('CSV optimization failed!', error);
       }
