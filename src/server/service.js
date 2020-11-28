@@ -148,55 +148,52 @@ function arrayObjectsToString(optimized) {
   return { result, totalQuantity };
 }
 
+function writeResultToFile(fileName, result, totalQuantity) {
+  let filePath = path.resolve('./upload/optimized/', fileName);
+  fs.writeFile(filePath, result, (err) => {
+    if (err) {
+      console.error('Failed to write file!', err);
+    }
+    console.log(`Successful CSV file optimization. Total quantity = ${totalQuantity}`);
+
+    filePath = path.resolve('./upload/', fileName);
+    fs.rm(filePath, (error) => {
+      if (error) console.error(`Failed to delete file ${filePath}!`, error);
+    });
+  });
+}
+
 function csvOptimization(fileName) {
-  return new Promise((resolve, reject) => {
-    let filePath = path.resolve('./upload/', fileName);
+  const filePath = path.resolve('./upload/', fileName);
 
-    const streamReading = fs.createReadStream(filePath, 'utf8');
+  const streamReading = fs.createReadStream(filePath, 'utf8');
 
-    const optimized = new Map();
-    let isFirst = true;
-    let last = '';
+  const optimized = new Map();
+  let isFirst = true;
+  let last = '';
 
-    streamReading.on('data', (chunk) => {
-      const goods = chunk.split('\n');
+  streamReading.on('data', (chunk) => {
+    const goods = chunk.split('\n');
 
-      if (isFirst) {
-        goods.shift();
-        isFirst = false;
-      }
-      goods.unshift(...(last + goods.shift()).split('\n'));
-      last = goods.pop();
+    if (isFirst) {
+      goods.shift();
+      isFirst = false;
+    }
+    goods.unshift(...(last + goods.shift()).split('\n'));
+    last = goods.pop();
 
-      for (let index = 0; index < goods.length; index++) {
-        stringToObject(goods[index], optimized);
-      }
-    });
+    for (let index = 0; index < goods.length; index++) {
+      stringToObject(goods[index], optimized);
+    }
+  });
 
-    streamReading.on('end', () => {
-      const { result, totalQuantity } = arrayObjectsToString(optimized);
-      filePath = path.resolve('./upload/optimized/', fileName);
+  streamReading.on('end', () => {
+    const { result, totalQuantity } = arrayObjectsToString(optimized);
+    writeResultToFile(fileName, result, totalQuantity);
+  });
 
-      fs.writeFile(filePath, result, (err) => {
-        if (err) {
-          console.error('Failed to write file!', err);
-          return reject(err);
-        }
-        console.log(`Successful CSV file optimization. Total quantity = ${totalQuantity}`);
-
-        filePath = path.resolve('./upload/', fileName);
-        fs.rm(filePath, (error) => {
-          if (error) console.error(`Failed to delete file ${filePath}!`, error);
-        });
-
-        return resolve(totalQuantity);
-      });
-    });
-
-    streamReading.on('error', (err) => {
-      console.error('Failed to read file!', err);
-      return reject(err);
-    });
+  streamReading.on('error', (err) => {
+    console.error('Failed to read file!', err);
   });
 }
 
