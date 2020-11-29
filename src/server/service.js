@@ -5,6 +5,7 @@ const { promisify } = require('util');
 const { Transform } = require('stream');
 const fs = require('fs');
 const path = require('path');
+const { once } = require('events');
 
 const fsPromises = fs.promises;
 
@@ -21,9 +22,8 @@ Array.prototype.myMap = myMap;
 async function myMapAsync(callback) {
   const result = [];
   try {
-    // eslint-disable-next-line no-restricted-syntax
-    for await (const element of this) {
-      result.push(await callback(element));
+    for (let index = 0; index < this.length; index++) {
+      result.push(await callback(this[index]));
     }
   } catch (err) {
     console.error(err);
@@ -133,33 +133,38 @@ function stringToObject(str, optimized) {
   else optimized.get(index).quantity += product.quantity;
 }
 
-function arrayObjectsToString(optimized) {
-  let result = [];
-  let totalQuantity = 0;
-  // eslint-disable-next-line no-restricted-syntax
-  for (const [, product] of optimized) {
-    result.push(
-      `  {"type": "${product.type}", "color": "${product.color}", ` +
-        `"quantity": ${product.quantity}, "price": ${product.price}}`,
-    );
-    totalQuantity += product.quantity;
-  }
-  result = `[\n${result.join(',\n')}\n]`;
-  return { result, totalQuantity };
-}
-
-function writeResultToFile(fileName, result, totalQuantity) {
+async function writeResultToFile(fileName, optimized) {
   let filePath = path.resolve('./upload/optimized/', fileName);
-  fs.writeFile(filePath, result, (err) => {
-    if (err) {
-      console.error('Failed to write file!', err);
-    }
-    console.log(`Successful CSV file optimization. Total quantity = ${totalQuantity}`);
+  const streamWriting = fs.createWriteStream(filePath);
 
-    filePath = path.resolve('./upload/', fileName);
-    fs.rm(filePath, (error) => {
-      if (error) console.error(`Failed to delete file ${filePath}!`, error);
-    });
+  streamWriting.on('error', (err) => {
+    console.error('Failed to write file!', err);
+  });
+
+  streamWriting.write('[');
+  let totalQuantity = 0;
+  let isFirst = true;
+  // eslint-disable-next-line no-restricted-syntax
+  for await (const [, product] of optimized) {
+    let result = ',\n';
+    if (isFirst) {
+      isFirst = false;
+      result = '\n';
+    }
+    result +=
+      `  {"type": "${product.type}", "color": "${product.color}", ` +
+      `"quantity": ${product.quantity}, "price": ${product.price}}`;
+
+    totalQuantity += product.quantity;
+    const canWrite = streamWriting.write(result);
+    if (!canWrite) await once(streamWriting, 'drain');
+  }
+  streamWriting.end('\n]');
+  console.log(`Successful CSV file optimization. Total quantity = ${totalQuantity}`);
+
+  filePath = path.resolve('./upload/', fileName);
+  fs.rm(filePath, (error) => {
+    if (error) console.error(`Failed to delete file ${filePath}!`, error);
   });
 }
 
@@ -188,8 +193,7 @@ function csvOptimization(fileName) {
   });
 
   streamReading.on('end', () => {
-    const { result, totalQuantity } = arrayObjectsToString(optimized);
-    writeResultToFile(fileName, result, totalQuantity);
+    writeResultToFile(fileName, optimized);
   });
 
   streamReading.on('error', (err) => {
