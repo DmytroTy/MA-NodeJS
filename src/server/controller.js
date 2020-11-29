@@ -17,6 +17,10 @@ const {
 
 const pathToFile = path.resolve(__dirname, '../../', 'goods.json');
 
+const { DIR_UPLOAD, DIR_OPTIMIZED } = process.env;
+
+const promisifiedPipeline = promisify(pipeline);
+
 let store = [];
 let storageInJson = true;
 
@@ -183,24 +187,27 @@ async function discountAsyncAwait(response) {
   }
 }
 
-const promisifiedPipeline = promisify(pipeline);
-
-const { DIR_UPLOAD, DIR_OPTIMIZED } = process.env;
-
 async function uploadCsv(inputStream) {
   const gunzip = createGunzip();
 
   const timestamp = Date.now();
   const id = nanoid(5);
+  try {
+    await fs.promises.mkdir(DIR_UPLOAD, { recursive: true });
+  } catch (err) {
+    console.error(`Failed to create folder ${DIR_UPLOAD}!`, err);
+    return err;
+  }
   const filePath = path.resolve(DIR_UPLOAD, `${timestamp}_${id}.json`);
   const outputStream = fs.createWriteStream(filePath);
 
   const csvToJson = createCsvToJson();
 
   try {
-    await promisifiedPipeline(inputStream, gunzip, csvToJson, outputStream);
+    return await promisifiedPipeline(inputStream, gunzip, csvToJson, outputStream);
   } catch (err) {
     console.error('CSV pipeline failed', err);
+    return err;
   }
 }
 

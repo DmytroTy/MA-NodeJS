@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { once } = require('events');
 
-const fsPromises = fs.promises;
+const { DIR_UPLOAD, DIR_OPTIMIZED } = process.env;
 
 function myMap(callback) {
   const result = [];
@@ -133,14 +133,19 @@ function stringToObject(str, optimized) {
   else optimized.get(index).quantity += product.quantity;
 }
 
-const { DIR_UPLOAD, DIR_OPTIMIZED } = process.env;
-
 async function writeResultToFile(fileName, optimized) {
+  try {
+    await fs.promises.mkdir(DIR_OPTIMIZED, { recursive: true });
+  } catch (err) {
+    console.error(`Failed to create folder ${DIR_OPTIMIZED}!`, err);
+    return err;
+  }
   let filePath = path.resolve(DIR_OPTIMIZED, fileName);
   const streamWriting = fs.createWriteStream(filePath);
 
   streamWriting.on('error', (err) => {
     console.error('Failed to write file!', err);
+    return err;
   });
 
   streamWriting.write('[');
@@ -168,6 +173,7 @@ async function writeResultToFile(fileName, optimized) {
   fs.rm(filePath, (error) => {
     if (error) console.error(`Failed to delete file ${filePath}!`, error);
   });
+  return true;
 }
 
 function csvOptimization(fileName) {
@@ -218,7 +224,7 @@ function autoOptimizationCsv() {
         let isOptimized;
         try {
           const filePath = path.resolve(DIR_OPTIMIZED, files[i]);
-          await fsPromises.access(filePath);
+          await fs.promises.access(filePath);
           isOptimized = true;
         } catch (error) {
           isOptimized = false;
@@ -231,7 +237,7 @@ function autoOptimizationCsv() {
           });
         }
       } catch (error) {
-        console.error('CSV optimization failed!', error);
+        console.error('CSV auto-optimization failed!', error);
       }
     }
   });
@@ -240,7 +246,7 @@ function autoOptimizationCsv() {
 async function readFolder(folderPath) {
   let files;
   try {
-    files = await fsPromises.readdir(folderPath, { withFileTypes: true });
+    files = await fs.promises.readdir(folderPath, { withFileTypes: true });
   } catch (err) {
     console.error(`Failed to read folder ${folderPath}!`, err);
     return err;
@@ -254,7 +260,7 @@ async function readFolder(folderPath) {
   for (let i = 0; i < files.length; i++) {
     const filePath = path.resolve(folderPath, files[i].name);
     try {
-      const stats = await fsPromises.stat(filePath);
+      const stats = await fs.promises.stat(filePath);
       files[i].size = stats.size;
       files[i].create_time = stats.ctime;
     } catch (error) {
