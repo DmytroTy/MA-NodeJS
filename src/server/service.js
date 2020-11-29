@@ -133,8 +133,10 @@ function stringToObject(str, optimized) {
   else optimized.get(index).quantity += product.quantity;
 }
 
+const { DIR_UPLOAD, DIR_OPTIMIZED } = process.env;
+
 async function writeResultToFile(fileName, optimized) {
-  let filePath = path.resolve('./upload/optimized/', fileName);
+  let filePath = path.resolve(DIR_OPTIMIZED, fileName);
   const streamWriting = fs.createWriteStream(filePath);
 
   streamWriting.on('error', (err) => {
@@ -162,7 +164,7 @@ async function writeResultToFile(fileName, optimized) {
   streamWriting.end('\n]');
   console.log(`Successful CSV file optimization. Total quantity = ${totalQuantity}`);
 
-  filePath = path.resolve('./upload/', fileName);
+  filePath = path.resolve(DIR_UPLOAD, fileName);
   fs.rm(filePath, (error) => {
     if (error) console.error(`Failed to delete file ${filePath}!`, error);
   });
@@ -170,7 +172,7 @@ async function writeResultToFile(fileName, optimized) {
 
 function csvOptimization(fileName) {
   return new Promise((resolve, reject) => {
-    const filePath = path.resolve('./upload/', fileName);
+    const filePath = path.resolve(DIR_UPLOAD, fileName);
 
     const streamReading = fs.createReadStream(filePath, 'utf8');
 
@@ -206,7 +208,7 @@ function csvOptimization(fileName) {
 }
 
 function autoOptimizationCsv() {
-  fs.readdir('./upload', async (err, files) => {
+  fs.readdir(DIR_UPLOAD, async (err, files) => {
     if (err) console.error('Failed to read folder!', err);
 
     const index = files.indexOf('optimized');
@@ -215,16 +217,19 @@ function autoOptimizationCsv() {
       try {
         let isOptimized;
         try {
-          await fsPromises.access(`./upload/optimized/${files[i]}`);
+          const filePath = path.resolve(DIR_OPTIMIZED, files[i]);
+          await fsPromises.access(filePath);
           isOptimized = true;
         } catch (error) {
           isOptimized = false;
         }
         if (!isOptimized) await csvOptimization(files[i]);
-        else
-          fs.rm(`./upload/${files[i]}`, (error) => {
-            if (error) console.error(`Failed to delete file ./upload/${files[i]}!`, error);
+        else {
+          const filePath = path.resolve(DIR_UPLOAD, files[i]);
+          fs.rm(filePath, (error) => {
+            if (error) console.error(`Failed to delete file ${filePath}!`, error);
           });
+        }
       } catch (error) {
         console.error('CSV optimization failed!', error);
       }
@@ -237,7 +242,7 @@ async function readFolder(folderPath) {
   try {
     files = await fsPromises.readdir(folderPath, { withFileTypes: true });
   } catch (err) {
-    console.error('Failed to read folder!', err);
+    console.error(`Failed to read folder ${folderPath}!`, err);
     return err;
   }
   let indexFolder;
@@ -253,7 +258,7 @@ async function readFolder(folderPath) {
       files[i].size = stats.size;
       files[i].create_time = stats.ctime;
     } catch (error) {
-      console.error('Failed to read file!', error);
+      console.error(`Failed to read file ${filePath}!`, error);
       return error;
     }
   }

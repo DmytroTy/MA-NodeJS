@@ -185,12 +185,14 @@ async function discountAsyncAwait(response) {
 
 const promisifiedPipeline = promisify(pipeline);
 
+const { DIR_UPLOAD, DIR_OPTIMIZED } = process.env;
+
 async function uploadCsv(inputStream) {
   const gunzip = createGunzip();
 
   const timestamp = Date.now();
   const id = nanoid(5);
-  const filePath = `./upload/${timestamp}_${id}.json`;
+  const filePath = `${DIR_UPLOAD}/${timestamp}_${id}.json`;
   const outputStream = fs.createWriteStream(filePath);
 
   const csvToJson = createCsvToJson();
@@ -204,9 +206,9 @@ async function uploadCsv(inputStream) {
 
 async function getStores(response) {
   try {
-    const files = await readFolder('./upload');
+    const files = await readFolder(DIR_UPLOAD);
     const result = { upload: files };
-    const filesOptimized = await readFolder('./upload/optimized');
+    const filesOptimized = await readFolder(DIR_OPTIMIZED);
     result.optimized = filesOptimized;
     response.write(JSON.stringify(result));
     response.end();
