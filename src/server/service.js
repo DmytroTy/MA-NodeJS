@@ -232,6 +232,34 @@ function autoOptimizationCsv() {
   });
 }
 
+async function readFolder(folderPath) {
+  let files;
+  try {
+    files = await fsPromises.readdir(folderPath, { withFileTypes: true });
+  } catch (err) {
+    console.error('Failed to read folder!', err);
+    return err;
+  }
+  let indexFolder;
+  files.forEach((file, index) => {
+    if (file.name === 'optimized') indexFolder = index;
+  });
+  if (indexFolder !== -1) files.splice(indexFolder, 1);
+
+  for (let i = 0; i < files.length; i++) {
+    const filePath = path.resolve(folderPath, files[i].name);
+    try {
+      const stats = await fsPromises.stat(filePath);
+      files[i].size = stats.size;
+      files[i].create_time = stats.ctime;
+    } catch (error) {
+      console.error('Failed to read file!', error);
+      return error;
+    }
+  }
+  return files;
+}
+
 module.exports = {
   getDiscountCallback,
   getDiscountPromise,
@@ -239,4 +267,5 @@ module.exports = {
   createCsvToJson,
   csvOptimization,
   autoOptimizationCsv,
+  readFolder,
 };

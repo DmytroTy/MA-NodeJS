@@ -12,6 +12,7 @@ const {
   getDiscountAsyncAwait,
   createCsvToJson,
   csvOptimization,
+  readFolder,
 } = require('./service');
 
 const pathToFile = path.resolve(__dirname, '../../', 'goods.json');
@@ -201,19 +202,18 @@ async function uploadCsv(inputStream) {
   }
 }
 
-function getStores(response) {
-  fs.readdir('./upload', (err, files) => {
-    if (err) {
-      console.error('Failed to read folder!', err);
-      return serverError(response);
-    }
-
-    // ? files.pop();
-    const index = files.indexOf('optimized');
-    if (index !== -1) files.splice(index, 1);
-    response.write(JSON.stringify(files));
-    return response.end();
-  });
+async function getStores(response) {
+  try {
+    const files = await readFolder('./upload');
+    const result = { upload: files };
+    const filesOptimized = await readFolder('./upload/optimized');
+    result.optimized = filesOptimized;
+    response.write(JSON.stringify(result));
+    response.end();
+  } catch (err) {
+    console.error(err.message);
+    serverError(response);
+  }
 }
 
 function optimizeCsv(url, response) {
