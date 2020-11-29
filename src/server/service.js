@@ -169,35 +169,39 @@ async function writeResultToFile(fileName, optimized) {
 }
 
 function csvOptimization(fileName) {
-  const filePath = path.resolve('./upload/', fileName);
+  return new Promise((resolve, reject) => {
+    const filePath = path.resolve('./upload/', fileName);
 
-  const streamReading = fs.createReadStream(filePath, 'utf8');
+    const streamReading = fs.createReadStream(filePath, 'utf8');
 
-  const optimized = new Map();
-  let isFirst = true;
-  let last = '';
+    const optimized = new Map();
+    let isFirst = true;
+    let last = '';
 
-  streamReading.on('data', (chunk) => {
-    const goods = chunk.split('\n');
+    streamReading.on('data', (chunk) => {
+      const goods = chunk.split('\n');
 
-    if (isFirst) {
-      goods.shift();
-      isFirst = false;
-    }
-    goods.unshift(...(last + goods.shift()).split('\n'));
-    last = goods.pop();
+      if (isFirst) {
+        goods.shift();
+        isFirst = false;
+      }
+      goods.unshift(...(last + goods.shift()).split('\n'));
+      last = goods.pop();
 
-    for (let index = 0; index < goods.length; index++) {
-      stringToObject(goods[index], optimized);
-    }
-  });
+      for (let index = 0; index < goods.length; index++) {
+        stringToObject(goods[index], optimized);
+      }
+    });
 
-  streamReading.on('end', () => {
-    writeResultToFile(fileName, optimized);
-  });
+    streamReading.on('end', async () => {
+      await writeResultToFile(fileName, optimized);
+      resolve();
+    });
 
-  streamReading.on('error', (err) => {
-    console.error('Failed to read file!', err);
+    streamReading.on('error', (err) => {
+      console.error('Failed to read file!', err);
+      reject(err);
+    });
   });
 }
 
