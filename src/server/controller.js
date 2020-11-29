@@ -192,7 +192,7 @@ async function uploadCsv(inputStream) {
 
   const timestamp = Date.now();
   const id = nanoid(5);
-  const filePath = `${DIR_UPLOAD}/${timestamp}_${id}.json`;
+  const filePath = path.resolve(DIR_UPLOAD, `${timestamp}_${id}.json`);
   const outputStream = fs.createWriteStream(filePath);
 
   const csvToJson = createCsvToJson();
