@@ -214,24 +214,23 @@ function csvOptimization(fileName) {
 }
 
 function autoOptimizationCsv() {
-  fs.readdir(DIR_UPLOAD, async (err, files) => {
+  fs.readdir(DIR_UPLOAD, { withFileTypes: true }, async (err, contents) => {
     if (err) console.error('Failed to read folder!', err);
 
-    const index = files.indexOf('optimized');
-    if (index !== -1) files.splice(index, 1);
+    const files = contents.filter((file) => file.isFile());
     for (let i = 0; i < files.length; i++) {
       try {
         let isOptimized;
         try {
-          const filePath = path.resolve(DIR_OPTIMIZED, files[i]);
+          const filePath = path.resolve(DIR_OPTIMIZED, files[i].name);
           await fs.promises.access(filePath);
           isOptimized = true;
         } catch (error) {
           isOptimized = false;
         }
-        if (!isOptimized) await csvOptimization(files[i]);
+        if (!isOptimized) await csvOptimization(files[i].name);
         else {
-          const filePath = path.resolve(DIR_UPLOAD, files[i]);
+          const filePath = path.resolve(DIR_UPLOAD, files[i].name);
           fs.rm(filePath, (error) => {
             if (error) console.error(`Failed to delete file ${filePath}!`, error);
           });
@@ -251,11 +250,7 @@ async function readFolder(folderPath) {
     console.error(`Failed to read folder ${folderPath}!`, err);
     return err;
   }
-  let indexFolder;
-  files.forEach((file, index) => {
-    if (file.name === 'optimized') indexFolder = index;
-  });
-  if (indexFolder !== -1) files.splice(indexFolder, 1);
+  files = files.filter((file) => file.isFile());
 
   for (let i = 0; i < files.length; i++) {
     const filePath = path.resolve(folderPath, files[i].name);

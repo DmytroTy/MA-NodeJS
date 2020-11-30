@@ -214,9 +214,9 @@ async function uploadCsv(inputStream) {
 async function getStores(response) {
   try {
     const files = await readFolder(DIR_UPLOAD);
-    const result = { upload: files };
     const filesOptimized = await readFolder(DIR_OPTIMIZED);
-    result.optimized = filesOptimized;
+    const result = { upload: files, optimized: filesOptimized };
+
     response.write(JSON.stringify(result));
     response.end();
   } catch (err) {
