@@ -152,7 +152,7 @@ async function writeResultToFile(fileName, optimized) {
   let totalQuantity = 0;
   let isFirst = true;
   // eslint-disable-next-line no-restricted-syntax
-  for await (const [, product] of optimized) {
+  for (const [, product] of optimized) {
     let result = ',\n';
     if (isFirst) {
       isFirst = false;
