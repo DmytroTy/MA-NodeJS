@@ -226,7 +226,7 @@ async function getStores(response) {
 }
 
 function optimizeCsv(url, response) {
-  const fileName = url.slice(url.lastIndexOf('/') + 1);
+  const fileName = path.basename(url);
   response.write(JSON.stringify({ status: '202 Accepted' }));
   response.end();
   csvOptimization(fileName);
