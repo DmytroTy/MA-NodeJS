@@ -225,11 +225,21 @@ async function getStores(response) {
   }
 }
 
-function optimizeCsv(url, response) {
+async function optimizeCsv(url, response) {
   const fileName = path.basename(url);
-  response.write(JSON.stringify({ status: '202 Accepted' }));
-  response.end();
-  csvOptimization(fileName);
+  try {
+    const filePath = path.resolve(DIR_UPLOAD, fileName);
+    await fs.promises.access(filePath);
+
+    response.statusCode = 202;
+    response.write(JSON.stringify({ status: '202 Accepted' }));
+    response.end();
+    csvOptimization(fileName);
+  } catch (error) {
+    response.statusCode = 404;
+    response.write(JSON.stringify({ error: '404', message: `404 File ${fileName} not found!` }));
+    response.end();
+  }
 }
 
 module.exports = {
