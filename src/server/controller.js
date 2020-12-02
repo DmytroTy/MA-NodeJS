@@ -1,10 +1,25 @@
 /* eslint-disable no-plusplus */
 const fs = require('fs');
 const path = require('path');
-const { task1: filterGoods, task2: goodsWithMaxCost, task3 } = require('./task');
-const { getDiscountCallback, getDiscountPromise, getDiscountAsyncAwait } = require('./service');
+const { promisify } = require('util');
+const { createGunzip } = require('zlib');
+const { pipeline } = require('stream');
+const { nanoid } = require('nanoid');
+const { task1: filterGoods, task2: goodsWithMaxCost, task3 } = require('../task');
+const {
+  getDiscountCallback,
+  getDiscountPromise,
+  getDiscountAsyncAwait,
+  createCsvToJson,
+  csvOptimization,
+  readFolder,
+} = require('./service');
 
-const pathToFile = path.resolve(__dirname, '../', 'goods.json');
+const pathToFile = path.resolve(__dirname, '../../', 'goods.json');
+
+const { DIR_UPLOAD, DIR_OPTIMIZED } = process.env;
+
+const promisifiedPipeline = promisify(pipeline);
 
 let store = [];
 let storageInJson = true;
@@ -172,6 +187,61 @@ async function discountAsyncAwait(response) {
   }
 }
 
+async function uploadCsv(inputStream) {
+  const gunzip = createGunzip();
+
+  const timestamp = Date.now();
+  const id = nanoid(5);
+  try {
+    await fs.promises.mkdir(DIR_UPLOAD, { recursive: true });
+  } catch (err) {
+    console.error(`Failed to create folder ${DIR_UPLOAD}!`, err);
+    return err;
+  }
+  const filePath = path.resolve(DIR_UPLOAD, `${timestamp}_${id}.json`);
+  const outputStream = fs.createWriteStream(filePath);
+
+  const csvToJson = createCsvToJson();
+
+  try {
+    return await promisifiedPipeline(inputStream, gunzip, csvToJson, outputStream);
+  } catch (err) {
+    console.error('CSV pipeline failed', err);
+    return err;
+  }
+}
+
+async function getStores(response) {
+  try {
+    const files = await readFolder(DIR_UPLOAD);
+    const filesOptimized = await readFolder(DIR_OPTIMIZED);
+    const result = { upload: files, optimized: filesOptimized };
+
+    response.write(JSON.stringify(result));
+    response.end();
+  } catch (err) {
+    console.error(err.message);
+    serverError(response);
+  }
+}
+
+async function optimizeCsv(url, response) {
+  const fileName = path.basename(url);
+  try {
+    const filePath = path.resolve(DIR_UPLOAD, fileName);
+    await fs.promises.access(filePath);
+
+    response.statusCode = 202;
+    response.write(JSON.stringify({ status: '202 Accepted' }));
+    response.end();
+    csvOptimization(fileName);
+  } catch (error) {
+    response.statusCode = 404;
+    response.write(JSON.stringify({ error: '404', message: `404 File ${fileName} not found!` }));
+    response.end();
+  }
+}
+
 module.exports = {
   findGoods,
   findGoodsWithMaxCost,
@@ -179,6 +249,9 @@ module.exports = {
   discountPromise,
   discountAsyncAwait,
   standardize,
+  getStores,
   newData,
   switchStorage,
+  optimizeCsv,
+  uploadCsv,
 };

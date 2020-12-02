@@ -1,4 +1,6 @@
 .vscode
+upload/
+*.csv.gz
 
 # Logs
 logs

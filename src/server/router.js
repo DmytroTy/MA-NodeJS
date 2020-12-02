@@ -5,8 +5,11 @@ const {
   discountPromise,
   discountAsyncAwait,
   standardize,
+  getStores,
   newData,
   switchStorage,
+  optimizeCsv,
+  uploadCsv,
 } = require('./controller');
 
 function notFound(response) {
@@ -21,7 +24,7 @@ function incorrectParameters(response) {
   response.end();
 }
 
-module.exports = (request, response) => {
+function handleRoutes(request, response) {
   const { url, method, queryParams, body: data } = request;
 
   response.setHeader('Content-Type', 'application/json');
@@ -42,11 +45,42 @@ module.exports = (request, response) => {
         return discountAsyncAwait(response);
       case url === '/standardize':
         return standardize(response);
+      case url === '/stores-csv':
+        return getStores(response);
       case url.startsWith('/switch?storage='):
         return switchStorage(response, queryParams);
       default:
         return notFound(response);
     }
   if (method === 'POST' && url === '/new-data') return newData(data, response);
+  if (method === 'PUT' && url.startsWith('/stores-csv/optimize/'))
+    return optimizeCsv(url, response);
+
   return notFound(response);
-};
+}
+
+async function handleStreamRoutes(request, response) {
+  const { url, method } = request;
+
+  response.setHeader('Content-Type', 'application/json');
+
+  if (method === 'POST' && url === '/stores-csv') {
+    try {
+      await uploadCsv(request);
+    } catch (err) {
+      console.error('Failed to upload CSV', err);
+
+      response.statusCode = 500;
+      response.write(JSON.stringify({ error: '500', message: '500 Server error' }));
+      response.end();
+      return;
+    }
+    response.write(JSON.stringify({ status: '200 OK' }));
+    response.end();
+    return;
+  }
+
+  notFound(response);
+}
+
+module.exports = { handleRoutes, handleStreamRoutes };
