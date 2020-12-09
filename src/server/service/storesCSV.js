@@ -1,82 +1,11 @@
 /* eslint-disable no-await-in-loop */
-/* eslint-disable no-extend-native */
 /* eslint-disable no-plusplus */
-const { promisify } = require('util');
 const { Transform } = require('stream');
 const fs = require('fs');
 const path = require('path');
 const { once } = require('events');
 
-const { DIR_UPLOAD, DIR_OPTIMIZED } = process.env;
-
-function myMap(callback) {
-  const result = [];
-  for (let index = 0; index < this.length; index++) {
-    result.push(callback(this[index]));
-  }
-  return result;
-}
-
-Array.prototype.myMap = myMap;
-
-async function myMapAsync(callback) {
-  const result = [];
-  try {
-    for (let index = 0; index < this.length; index++) {
-      result.push(await callback(this[index]));
-    }
-  } catch (err) {
-    console.error(err);
-  }
-  return result;
-}
-
-Array.prototype.myMapAsync = myMapAsync;
-
-function generateDiscount(callback) {
-  setTimeout(() => {
-    const discount = Math.floor(Math.random() * 99 + 1);
-    if (discount < 20) callback(null, discount);
-    else callback(new Error('The store cannot afford such big discounts.'));
-  }, 50);
-}
-
-const generateDiscountPromisified = promisify(generateDiscount);
-
-function generateDiscountPromise() {
-  return new Promise((resolve, reject) => {
-    generateDiscount((error, discount) => (error ? reject(error) : resolve(discount)));
-  });
-}
-
-function getDiscountCallback(times, discounts, callback) {
-  generateDiscount((err, discount) => {
-    if (err) return getDiscountCallback(times, discounts, callback);
-
-    discounts.push(discount);
-    if (discounts.length < times) getDiscountCallback(times, discounts, callback);
-    else callback(discounts);
-    return true;
-  });
-}
-
-function getDiscountPromise(times, discounts, callback) {
-  generateDiscountPromisified()
-    .then((discount) => {
-      discounts.push(discount);
-      if (discounts.length < times) getDiscountPromise(times, discounts, callback);
-      else callback(discounts);
-    })
-    .catch(() => getDiscountPromise(times, discounts, callback));
-}
-
-async function getDiscountAsyncAwait() {
-  try {
-    return await generateDiscountPromise();
-  } catch (err) {
-    return getDiscountAsyncAwait();
-  }
-}
+const { UPLOAD_DIR, OPTIMIZED_DIR } = process.env;
 
 function createCsvToJson() {
   let isFirst = true;
@@ -135,12 +64,12 @@ function stringToObject(str, optimized) {
 
 async function writeResultToFile(fileName, optimized) {
   try {
-    await fs.promises.mkdir(DIR_OPTIMIZED, { recursive: true });
+    await fs.promises.mkdir(OPTIMIZED_DIR, { recursive: true });
   } catch (err) {
-    console.error(`Failed to create folder ${DIR_OPTIMIZED}!`, err);
+    console.error(`Failed to create folder ${OPTIMIZED_DIR}!`, err);
     return err;
   }
-  let filePath = path.resolve(DIR_OPTIMIZED, fileName);
+  let filePath = path.resolve(OPTIMIZED_DIR, fileName);
   const streamWriting = fs.createWriteStream(filePath);
 
   streamWriting.on('error', (err) => {
@@ -169,7 +98,7 @@ async function writeResultToFile(fileName, optimized) {
   streamWriting.end('\n]');
   console.log(`Successful CSV file optimization. Total quantity = ${totalQuantity}`);
 
-  filePath = path.resolve(DIR_UPLOAD, fileName);
+  filePath = path.resolve(UPLOAD_DIR, fileName);
   fs.rm(filePath, (error) => {
     if (error) console.error(`Failed to delete file ${filePath}!`, error);
   });
@@ -178,7 +107,7 @@ async function writeResultToFile(fileName, optimized) {
 
 function csvOptimization(fileName) {
   return new Promise((resolve, reject) => {
-    const filePath = path.resolve(DIR_UPLOAD, fileName);
+    const filePath = path.resolve(UPLOAD_DIR, fileName);
 
     const streamReading = fs.createReadStream(filePath, 'utf8');
 
@@ -202,8 +131,12 @@ function csvOptimization(fileName) {
     });
 
     streamReading.on('end', async () => {
-      await writeResultToFile(fileName, optimized);
-      resolve();
+      try {
+        await writeResultToFile(fileName, optimized);
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
     });
 
     streamReading.on('error', (err) => {
@@ -213,8 +146,8 @@ function csvOptimization(fileName) {
   });
 }
 
-function autoOptimizationCsv() {
-  fs.readdir(DIR_UPLOAD, { withFileTypes: true }, async (err, contents) => {
+function autoOptimizationCsv(server) {
+  fs.readdir(UPLOAD_DIR, { withFileTypes: true }, async (err, contents) => {
     if (err) console.error('Failed to read folder!', err);
 
     const files = contents.filter((file) => file.isFile());
@@ -222,15 +155,16 @@ function autoOptimizationCsv() {
       try {
         let isOptimized;
         try {
-          const filePath = path.resolve(DIR_OPTIMIZED, files[i].name);
+          const filePath = path.resolve(OPTIMIZED_DIR, files[i].name);
           await fs.promises.access(filePath);
           isOptimized = true;
         } catch (error) {
           isOptimized = false;
         }
-        if (!isOptimized) await csvOptimization(files[i].name);
-        else {
-          const filePath = path.resolve(DIR_UPLOAD, files[i].name);
+        if (!isOptimized) {
+          if (server.listening) await csvOptimization(files[i].name);
+        } else {
+          const filePath = path.resolve(UPLOAD_DIR, files[i].name);
           fs.rm(filePath, (error) => {
             if (error) console.error(`Failed to delete file ${filePath}!`, error);
           });
@@ -242,13 +176,13 @@ function autoOptimizationCsv() {
   });
 }
 
-async function readFolder(folderPath) {
+async function readFolder(folderPath, next) {
   let files;
   try {
     files = await fs.promises.readdir(folderPath, { withFileTypes: true });
   } catch (err) {
     console.error(`Failed to read folder ${folderPath}!`, err);
-    return err;
+    return next(new Error('500 Failed to read folder'));
   }
   files = files.filter((file) => file.isFile());
 
@@ -260,16 +194,13 @@ async function readFolder(folderPath) {
       files[i].create_time = stats.ctime;
     } catch (error) {
       console.error(`Failed to read file ${filePath}!`, error);
-      return error;
+      return next(new Error('500 Failed to read file'));
     }
   }
   return files;
 }
 
 module.exports = {
-  getDiscountCallback,
-  getDiscountPromise,
-  getDiscountAsyncAwait,
   createCsvToJson,
   csvOptimization,
   autoOptimizationCsv,
