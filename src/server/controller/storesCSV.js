@@ -52,10 +52,11 @@ async function optimizeCsv(fileName, res) {
     await fs.promises.access(filePath);
 
     res.status(202).json({ status: '202 Accepted' });
-    csvOptimization(fileName);
   } catch (error) {
     res.status(404).json({ error: '404', message: `404 File ${fileName} not found!` });
+    return;
   }
+  csvOptimization(fileName).catch(console.error);
 }
 
 module.exports = {

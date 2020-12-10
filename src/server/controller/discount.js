@@ -7,8 +7,8 @@ const {
   getDiscountAsyncAwait,
 } = require('../service/discount');
 
-function discountCallback(res) {
-  const standard = standardize(readStorage(res));
+function discountCallback(res, next) {
+  const standard = standardize(readStorage(next));
   let mapped = 0;
 
   const discountedGoods = standard.myMap((product) => {
@@ -34,8 +34,8 @@ function discountCallback(res) {
   }
 }
 
-function discountPromise(res) {
-  const standard = standardize(readStorage(res));
+function discountPromise(res, next) {
+  const standard = standardize(readStorage(next));
   let mapped = 0;
 
   const discountedGoods = standard.myMap((product) => {
@@ -62,7 +62,7 @@ function discountPromise(res) {
 }
 
 async function discountAsyncAwait(res, next) {
-  const standard = standardize(readStorage(res));
+  const standard = standardize(readStorage(next));
   try {
     const discountedGoods = await standard.myMapAsync(async (product) => {
       let discount = getDiscountAsyncAwait();

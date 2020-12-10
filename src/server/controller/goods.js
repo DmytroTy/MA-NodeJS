@@ -12,17 +12,17 @@ function incorrectData(res) {
 }
 
 function findGoods(req, res, next) {
-  const goods = filterGoods(readStorage(res, next), req.query.parameter, req.query.value);
+  const goods = filterGoods(readStorage(next), req.query.parameter, req.query.value);
   res.json(goods);
 }
 
 function findGoodsWithMaxCost(res, next) {
-  const product = goodsWithMaxCost(readStorage(res, next));
+  const product = goodsWithMaxCost(readStorage(next));
   res.json(product);
 }
 
 function standardizeGoods(res, next) {
-  const standard = standardize(readStorage(res, next));
+  const standard = standardize(readStorage(next));
   res.json(standard);
 }
 
