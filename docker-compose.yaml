@@ -9,6 +9,7 @@ services:
       - 15432:5432
     volumes:
       - ./.data:/var/lib/postgresql/data
+      - ./src/db/migrate/init-sql:/docker-entrypoint-initdb.d
 
   adminer:
     container_name: adminer
