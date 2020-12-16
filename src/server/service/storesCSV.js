@@ -1,9 +1,11 @@
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-plusplus */
 const { Transform } = require('stream');
 const fs = require('fs');
 const path = require('path');
 const { once } = require('events');
+const db = require('../../db');
 
 const { UPLOAD_DIR, OPTIMIZED_DIR } = process.env;
 
@@ -80,7 +82,6 @@ async function writeResultToFile(fileName, optimized) {
   streamWriting.write('[');
   let totalQuantity = 0;
   let isFirst = true;
-  // eslint-disable-next-line no-restricted-syntax
   for (const [, product] of optimized) {
     let result = ',\n';
     if (isFirst) {
@@ -102,6 +103,18 @@ async function writeResultToFile(fileName, optimized) {
   fs.rm(filePath, (error) => {
     if (error) console.error(`Failed to delete file ${filePath}!`, error);
   });
+  return true;
+}
+
+async function writeResultToDB(filePath, optimized) {
+  for (const [, product] of optimized) {
+    await db.createProduct(product);
+  }
+
+  fs.rm(filePath, (error) => {
+    if (error) console.error(`Failed to delete file ${filePath}!`, error);
+  });
+
   return true;
 }
 
@@ -130,8 +143,12 @@ function csvOptimization(fileName) {
       }
     });
 
-    streamReading.on('end', () => {
-      writeResultToFile(fileName, optimized).then(resolve).catch(reject);
+    streamReading.on('end', async () => {
+      if (global.storageIn !== 'database') {
+        writeResultToFile(fileName, optimized).then(resolve).catch(reject);
+      } else {
+        writeResultToDB(filePath, optimized).then(resolve).catch(reject);
+      }
     });
 
     streamReading.on('error', (err) => {

@@ -26,6 +26,24 @@ Authorization: Basic TWFzdGVyczpBY2FkZW15
 GET http://localhost:3000/goods?parameter=quantity&value=0
 Authorization: Basic TWFzdGVyczpBY2FkZW15
 ###
+PUT http://localhost:3000/goods
+content-type: application/json
+Authorization: Basic TWFzdGVyczpBY2FkZW15
+
+{
+  "id": 1,
+  "type": "hat",
+  "color": "red",
+  "quantity": 5,
+  "price": 7.8
+}
+###
+GET http://localhost:3000/goods/1
+Authorization: Basic TWFzdGVyczpBY2FkZW15
+###
+DELETE http://localhost:3000/goods/9
+Authorization: Basic TWFzdGVyczpBY2FkZW15
+###
 GET http://localhost:3000/goods/standardize
 Authorization: Basic TWFzdGVyczpBY2FkZW15
 ###

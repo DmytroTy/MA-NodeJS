@@ -4,7 +4,7 @@ function standardize(goods) {
       type: good.type,
       color: good.color,
       quantity: good.quantity || 0,
-      price: good.price || good.priceForPair,
+      price: +(good.price || good.priceForPair).slice(1),
     };
   });
 }

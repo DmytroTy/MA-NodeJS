@@ -1,4 +1,5 @@
 const fs = require('fs');
+const db = require('../../db');
 const { STORE_FILE } = require('../../config');
 const { readStorage } = require('../service');
 const {
@@ -11,30 +12,34 @@ function incorrectData(res) {
   res.status(406).json({ error: '406', message: '406 Incorrect data recived!' });
 }
 
-function findGoods(req, res, next) {
-  const goods = filterGoods(readStorage(next), req.query.parameter, req.query.value);
+async function findGoods(req, res, next) {
+  const goods = filterGoods(await readStorage(next), req.query.parameter, req.query.value);
   res.json(goods);
 }
 
-function findGoodsWithMaxCost(res, next) {
-  const product = goodsWithMaxCost(readStorage(next));
+async function findGoodsWithMaxCost(res, next) {
+  const product = goodsWithMaxCost(await readStorage(next));
   res.json(product);
 }
 
-function standardizeGoods(res, next) {
-  const standard = standardize(readStorage(next));
+async function standardizeGoods(res, next) {
+  const standard = await readStorage(next);
   res.json(standard);
 }
 
 function switchStorage(req, res) {
   let message;
   switch (req.query.storage) {
+    case 'database':
+      global.storageIn = 'database';
+      message = 'Storage is switched to Database';
+      break;
     case 'json':
-      global.storageInJson = true;
+      global.storageIn = 'json';
       message = 'Storage is switched to JSON';
       break;
     case 'store':
-      global.storageInJson = false;
+      global.storageIn = 'store';
       message = 'Storage is switched to a global variable';
       break;
     default:
@@ -43,7 +48,7 @@ function switchStorage(req, res) {
   return res.json({ message });
 }
 
-function newData(req, res, next) {
+async function newData(req, res, next) {
   if (
     !Array.isArray(req.body) ||
     req.body.length < 1 ||
@@ -52,8 +57,22 @@ function newData(req, res, next) {
     return incorrectData(res);
 
   try {
-    if (!global.storageInJson) global.store = req.body;
-    else fs.writeFileSync(STORE_FILE, JSON.stringify(req.body, null, 1));
+    const products = [];
+    // eslint-disable-next-line default-case
+    switch (global.storageIn) {
+      case 'database':
+        // eslint-disable-next-line no-restricted-syntax
+        for (const product of standardize(req.body)) {
+          // eslint-disable-next-line no-await-in-loop
+          products.push(await db.createProduct(product));
+        }
+        return res.json(products);
+      case 'json':
+        fs.writeFileSync(STORE_FILE, JSON.stringify(req.body, null, 1));
+        break;
+      case 'store':
+        global.store = req.body;
+    }
   } catch (err) {
     console.error(err.message);
     return next(new Error('500 Server error'));

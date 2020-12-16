@@ -1,17 +1,25 @@
 /* eslint-disable no-extend-native */
 /* eslint-disable no-plusplus */
 const fs = require('fs');
+const db = require('../../db');
+const { task3: standardize } = require('./goods');
 const { STORE_FILE } = require('../../config');
 
 global.store = [];
-global.storageInJson = true;
+global.storageIn = 'database';
 
-function readStorage(next) {
-  if (!global.storageInJson) return global.store;
-
+// eslint-disable-next-line consistent-return
+async function readStorage(next) {
   try {
-    const rawdata = fs.readFileSync(STORE_FILE, 'utf8');
-    return JSON.parse(rawdata);
+    // eslint-disable-next-line default-case
+    switch (global.storageIn) {
+      case 'database':
+        return await db.getAllProducts();
+      case 'json':
+        return standardize(JSON.parse(fs.readFileSync(STORE_FILE, 'utf8')));
+      case 'store':
+        return standardize(global.store);
+    }
   } catch (err) {
     console.error(err.message);
     return next(new Error('500 Server error'));
