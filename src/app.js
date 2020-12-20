@@ -1,16 +1,23 @@
 const { port, host, INTERVAL_OPTIMIZATION } = require('./config');
+const db = require('./db');
 const app = require('./server');
 const { autoOptimizationCsv } = require('./server/service/storesCSV');
 
 let server;
 let intervalID;
 
-(function boot() {
-  server = app.listen(port, host, () => {
-    console.log(`Server started: ${host}:${port}`);
-  });
+(async function boot() {
+  try {
+    await db.testConnection();
 
-  intervalID = setInterval(() => autoOptimizationCsv(server), INTERVAL_OPTIMIZATION);
+    server = app.listen(port, host, () => {
+      console.log(`Server started: ${host}:${port}`);
+    });
+
+    intervalID = setInterval(() => autoOptimizationCsv(server), INTERVAL_OPTIMIZATION);
+  } catch (err) {
+    console.error('ERROR: Booting error', err.message || err);
+  }
 })();
 
 function exitHandler(error) {
@@ -19,12 +26,13 @@ function exitHandler(error) {
   console.log('Gracefully stopping...');
   clearInterval(intervalID);
 
-  server.close((err) => {
+  server.close(async (err) => {
     if (err) {
-      console.error(err, 'Failed to close server!');
-      process.exit();
+      console.error(err, 'ERROR: Failed to close server!');
+    } else {
+      console.log('INFO: Server has been stopped.');
     }
-    console.log('Server has been stopped.');
+    await db.close();
     process.exit(1);
   });
 }

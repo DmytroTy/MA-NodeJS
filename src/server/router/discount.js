@@ -4,13 +4,19 @@ const { discountCallback, discountPromise, discountAsyncAwait } = require('../co
 
 const discount = express.Router();
 
-discount.get('/callback', (req, res, next) => {
-  discountCallback(res, next);
-});
+discount.get(
+  '/callback',
+  asyncHandler(async (req, res, next) => {
+    await discountCallback(res, next);
+  }),
+);
 
-discount.get('/promise', (req, res, next) => {
-  discountPromise(res, next);
-});
+discount.get(
+  '/promise',
+  asyncHandler(async (req, res, next) => {
+    await discountPromise(res, next);
+  }),
+);
 
 discount.get(
   '/async-await',

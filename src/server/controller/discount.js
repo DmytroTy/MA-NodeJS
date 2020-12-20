@@ -1,5 +1,4 @@
 /* eslint-disable no-plusplus */
-const { task3: standardize } = require('../service/goods');
 const { readStorage } = require('../service');
 const {
   getDiscountCallback,
@@ -7,8 +6,8 @@ const {
   getDiscountAsyncAwait,
 } = require('../service/discount');
 
-function discountCallback(res, next) {
-  const standard = standardize(readStorage(next));
+async function discountCallback(res, next) {
+  const standard = await readStorage(next);
   let mapped = 0;
 
   const discountedGoods = standard.myMap((product) => {
@@ -34,8 +33,8 @@ function discountCallback(res, next) {
   }
 }
 
-function discountPromise(res, next) {
-  const standard = standardize(readStorage(next));
+async function discountPromise(res, next) {
+  const standard = await readStorage(next);
   let mapped = 0;
 
   const discountedGoods = standard.myMap((product) => {
@@ -62,7 +61,7 @@ function discountPromise(res, next) {
 }
 
 async function discountAsyncAwait(res, next) {
-  const standard = standardize(readStorage(next));
+  const standard = await readStorage(next);
   try {
     const discountedGoods = await standard.myMapAsync(async (product) => {
       let discount = getDiscountAsyncAwait();
