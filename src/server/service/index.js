@@ -6,7 +6,7 @@ const { STORE_FILE } = require('../../config');
 global.store = [];
 global.storageInJson = true;
 
-function readStorage(res, next) {
+function readStorage(next) {
   if (!global.storageInJson) return global.store;
 
   try {
