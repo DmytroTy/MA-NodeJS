@@ -40,6 +40,9 @@ Authorization: Basic TWFzdGVyczpBY2FkZW15
 ###
 GET http://localhost:3000/goods/1
 Authorization: Basic TWFzdGVyczpBY2FkZW15
+### Failed parameter:
+GET http://localhost:3000/goods/1x
+Authorization: Basic TWFzdGVyczpBY2FkZW15
 ###
 DELETE http://localhost:3000/goods/9
 Authorization: Basic TWFzdGVyczpBY2FkZW15
