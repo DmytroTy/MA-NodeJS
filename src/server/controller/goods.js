@@ -64,7 +64,7 @@ async function newData(req, res, next) {
         // eslint-disable-next-line no-restricted-syntax
         for (const product of standardize(req.body)) {
           // eslint-disable-next-line no-await-in-loop
-          products.push(await db.createProduct(product));
+          products.push(await db.upsertProduct(product));
         }
         return res.json(products);
       case 'json':

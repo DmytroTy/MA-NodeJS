@@ -108,7 +108,7 @@ async function writeResultToFile(fileName, optimized) {
 
 async function writeResultToDB(filePath, optimized) {
   for (const [, product] of optimized) {
-    await db.createProduct(product);
+    await db.upsertProduct(product);
   }
 
   fs.rm(filePath, (error) => {

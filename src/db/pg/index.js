@@ -25,7 +25,7 @@ module.exports = (config) => {
       client.end();
     },
 
-    createProduct: async ({ type, color, price = 0, quantity = 0 }) => {
+    upsertProduct: async ({ type, color, price = 0, quantity = 0 }) => {
       try {
         if (!type) {
           throw new Error('ERROR: No product type defined');

@@ -41,9 +41,17 @@ goods.put(
 goods.get(
   '/:id',
   asyncHandler(async (req, res, next) => {
+    if (typeof id !== 'number') {
+      res.status(406).json({ error: '406', message: '406 Incorrect parameters' });
+      return;
+    }
     try {
       const { id } = req.params;
       const product = await db.getProduct(id);
+      if (!product) {
+        res.status(404).json({ error: '404', message: `404 Product with id: ${id} not found!` });
+        return;
+      }
       res.json(product);
     } catch (err) {
       console.error(err.message);
@@ -55,6 +63,10 @@ goods.get(
 goods.delete(
   '/:id',
   asyncHandler(async (req, res, next) => {
+    if (typeof id !== 'number') {
+      res.status(406).json({ error: '406', message: '406 Incorrect parameters' });
+      return;
+    }
     try {
       const { id } = req.params;
       await db.deleteProduct(id);
