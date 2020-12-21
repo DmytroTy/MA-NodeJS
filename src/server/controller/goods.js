@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { incorrectData } = require('../router');
 const db = require('../../db');
 const { STORE_FILE } = require('../../config');
 const { readStorage } = require('../service');
@@ -7,10 +8,6 @@ const {
   task2: goodsWithMaxCost,
   task3: standardize,
 } = require('../service/goods');
-
-function incorrectData(res) {
-  res.status(406).json({ error: '406', message: '406 Incorrect data recived!' });
-}
 
 async function findGoods(req, res, next) {
   const goods = filterGoods(await readStorage(next), req.query.parameter, req.query.value);
@@ -43,9 +40,10 @@ function switchStorage(req, res) {
       message = 'Storage is switched to a global variable';
       break;
     default:
-      return incorrectData(res);
+      incorrectData(res);
+      return;
   }
-  return res.json({ message });
+  res.json({ message });
 }
 
 async function newData(req, res, next) {
@@ -53,8 +51,10 @@ async function newData(req, res, next) {
     !Array.isArray(req.body) ||
     req.body.length < 1 ||
     req.body.some((obj) => !obj.type || !obj.color || (!obj.price && !obj.priceForPair))
-  )
-    return incorrectData(res);
+  ) {
+    incorrectData(res);
+    return;
+  }
 
   try {
     const products = [];
@@ -66,18 +66,19 @@ async function newData(req, res, next) {
           // eslint-disable-next-line no-await-in-loop
           products.push(await db.upsertProduct(product));
         }
-        return res.json(products);
+        res.json(products);
+        return;
       case 'json':
         fs.writeFileSync(STORE_FILE, JSON.stringify(req.body, null, 1));
         break;
       case 'store':
         global.store = req.body;
     }
+    res.json(req.body);
   } catch (err) {
     console.error(err.message);
-    return next(new Error('500 Server error'));
+    next(new Error('500 Server error'));
   }
-  return res.json(req.body);
 }
 
 module.exports = {
