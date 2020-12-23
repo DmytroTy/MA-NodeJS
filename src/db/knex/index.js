@@ -1,0 +1,213 @@
+const Knex = require('knex');
+
+const name = 'knex';
+
+module.exports = (config) => {
+  const knex = new Knex(config);
+
+  const getID = async (table, value) => {
+    const res = await knex(table).select('id').where('name', value).whereNull('deleted_at');
+    return res[0].id;
+  };
+
+  return {
+    testConnection: async () => {
+      try {
+        console.log(`hello from ${name} testConnection`);
+        await knex.raw('SELECT NOW();');
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    close: async () => {
+      console.log(`INFO: Closing ${name} DB wrapper`);
+      // no close for knex
+    },
+
+    upsertProduct: async ({ type, color, price = 0, quantity = 0 }) => {
+      try {
+        if (!type) {
+          throw new Error('ERROR: No product type defined');
+        }
+        if (!color) {
+          throw new Error('ERROR: No product color defined');
+        }
+        const timestamp = new Date();
+        /* const p = JSON.parse(JSON.stringify(product));
+
+        delete p.id;
+        p.price = p.price || 0;
+        p.quantity = p.quantity || 0;
+        p.created_at = timestamp;
+        p.updated_at = timestamp; */
+
+        const p = {
+          id_type: await getID('types', type),
+          id_color: await getID('colors', color),
+          price,
+          quantity,
+          created_at: timestamp,
+          updated_at: timestamp,
+        };
+
+        /* // createProduct:
+        const res = await knex('products')
+          .insert(p)
+          .returning(['id', 'id_type', 'id_color', 'price', 'quantity', 'created_at', 'updated_at']); */
+
+        // upsertProduct:
+        const res = await knex('products')
+          .insert(p)
+          .onConflict(['id_type', 'id_color', 'price'])
+          .merge({
+            updated_at: timestamp,
+            deleted_at: null,
+            quantity: await (async () => {
+              const old = await knex('products')
+                .select('quantity', 'deleted_at')
+                .where({ id_type: p.id_type, id_color: p.id_color, price });
+
+              if (!old[0]) return 0;
+              return old[0].deleted_at ? p.quantity : old[0].quantity + p.quantity;
+            })(),
+          })
+          .returning([
+            'id',
+            'id_type',
+            'id_color',
+            'price',
+            'quantity',
+            'created_at',
+            'updated_at',
+          ]);
+
+        /* // upsertProduct:
+        const res = await knex.raw(
+          `INSERT INTO products(id_type, id_color, price, quantity, created_at, updated_at)
+            VALUES(?, ?, ?, ?, ?, ?)
+            ON CONFLICT ON CONSTRAINT products_product_unk DO UPDATE
+            SET quantity = products.quantity + ?, updated_at = ?
+            RETURNING id, id_type, id_color, price, quantity, created_at, updated_at;`,
+          [type, color, price, quantity, timestamp, timestamp, quantity, timestamp],
+        ); */
+
+        console.log(`DEBUG: New product created or updated: ${JSON.stringify(res[0])}`);
+        return res[0];
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    getProduct: async (id) => {
+      try {
+        if (!id) {
+          throw new Error('ERROR: No product id defined');
+        }
+        const res = await knex('products')
+          .column(
+            'products.id',
+            { type: 'types.name' },
+            { color: 'colors.name' },
+            'products.price',
+            'products.quantity',
+            'products.created_at',
+            'products.updated_at',
+          )
+          .select()
+          .join('types', 'types.id', '=', 'products.id_type')
+          .join('colors', 'colors.id', '=', 'products.id_color')
+          .where('products.id', id)
+          .whereNull('products.deleted_at');
+
+        return res[0];
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    getAllProducts: async () => {
+      try {
+        const res = await knex('products')
+          .column(
+            'products.id',
+            { type: 'types.name' },
+            { color: 'colors.name' },
+            'products.price',
+            'products.quantity',
+            'products.created_at',
+            'products.updated_at',
+          )
+          .select()
+          .join('types', 'types.id', '=', 'products.id_type')
+          .join('colors', 'colors.id', '=', 'products.id_color')
+          .whereNull('products.deleted_at');
+
+        return res;
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    updateProduct: async ({ id, ...product }) => {
+      try {
+        if (!id) {
+          throw new Error('ERROR: No product id defined');
+        }
+
+        if (!Object.keys(product).length) {
+          throw new Error('ERROR: Nothing to update');
+        }
+
+        product.updated_at = new Date();
+        product.deleted_at = null;
+        if (product.type) {
+          product.id_type = await getID('types', product.type);
+          delete product.type;
+        }
+        if (product.color) {
+          product.id_color = await getID('colors', product.color);
+          delete product.color;
+        }
+
+        const res = await knex('products')
+          .update(product)
+          .where('id', id)
+          .returning([
+            'id',
+            'id_type',
+            'id_color',
+            'price',
+            'quantity',
+            'created_at',
+            'updated_at',
+          ]);
+
+        console.log(`DEBUG: Product updated: ${JSON.stringify(res[0])}`);
+        return res[0];
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    deleteProduct: async (id) => {
+      try {
+        if (!id) {
+          throw new Error('ERROR: No product id defined');
+        }
+        // await knex('products').where('id', id).del();
+        await knex('products').update('deleted_at', new Date()).where('id', id);
+
+        return true;
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+  };
+};

@@ -77,6 +77,10 @@ async function newData(req, res, next) {
     res.json(req.body);
   } catch (err) {
     console.error(err.message);
+    if (err.code === '23502') {
+      res.status(409).json({ error: '409', message: '409 Type or color not exist' });
+      return;
+    }
     next(new Error('500 Server error'));
   }
 }

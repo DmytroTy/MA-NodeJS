@@ -8,7 +8,11 @@ let intervalID;
 
 (async function boot() {
   try {
-    await db.testConnection();
+    await db.init();
+
+    db.setType('knex');
+
+    console.log(`Now DB wrapper type is ${db.getType()}`);
 
     server = app.listen(port, host, () => {
       console.log(`Server started: ${host}:${port}`);
@@ -32,7 +36,7 @@ function exitHandler(error) {
     } else {
       console.log('INFO: Server has been stopped.');
     }
-    await db.close();
+    await db.end();
     process.exit(1);
   });
 }

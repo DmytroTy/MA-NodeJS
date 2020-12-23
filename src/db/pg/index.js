@@ -1,19 +1,15 @@
 const { Pool } = require('pg');
 
+const name = 'pg';
+
 module.exports = (config) => {
-  let client;
-  try {
-    client = new Pool(config);
-  } catch (err) {
-    console.error(err.message || err);
-    throw err;
-  }
+  const client = new Pool(config);
 
   return {
     testConnection: async () => {
       try {
-        console.log('hello from pg testConnection');
-        await client.query('SELECT NOW()');
+        console.log(`hello from ${name} testConnection`);
+        await client.query('SELECT NOW();');
       } catch (err) {
         console.error(err.message || err);
         throw err;
@@ -21,7 +17,7 @@ module.exports = (config) => {
     },
 
     close: async () => {
-      console.log('INFO: Closing pg DB wrapper');
+      console.log(`INFO: Closing ${name} DB wrapper`);
       client.end();
     },
 
@@ -36,11 +32,18 @@ module.exports = (config) => {
         const timestamp = new Date();
 
         const res = await client.query(
-          `INSERT INTO products(type, color, price, quantity, created_at, updated_at)
-            VALUES($1, $2, $3, $4, $5, $6)
+          `INSERT INTO products(id_type, id_color, price, quantity, created_at, updated_at)
+            VALUES(
+              (SELECT id FROM types WHERE name = $1),
+              (SELECT id FROM colors WHERE name = $2),
+              $3,
+              $4,
+              $5,
+              $6
+            )
             ON CONFLICT ON CONSTRAINT products_product_unk DO UPDATE
             SET quantity = products.quantity + $4, updated_at = $6
-            RETURNING id, type, color, price, quantity, created_at, updated_at`,
+            RETURNING id, id_type, id_color, price, quantity, created_at, updated_at;`,
           [type, color, price, quantity, timestamp, timestamp],
         );
 
@@ -58,8 +61,11 @@ module.exports = (config) => {
           throw new Error('ERROR: No product id defined');
         }
         const res = await client.query(
-          `SELECT id, type, color, price, quantity, created_at, updated_at
-            FROM products WHERE id = $1 AND deleted_at IS NULL`,
+          `SELECT p.id, t.name AS type, c.name AS color, p.price, p.quantity, p.created_at, p.updated_at
+            FROM products AS p
+            JOIN types AS t ON t.id = p.id_type
+            JOIN colors AS c ON c.id = p.id_color
+            WHERE p.id = $1 AND p.deleted_at IS NULL;`,
           [id],
         );
 
@@ -73,8 +79,11 @@ module.exports = (config) => {
     getAllProducts: async () => {
       try {
         const res = await client.query(
-          `SELECT id, type, color, price, quantity, created_at, updated_at
-            FROM products WHERE deleted_at IS NULL`,
+          `SELECT p.id, t.name AS type, c.name AS color, p.price, p.quantity, p.created_at, p.updated_at
+            FROM products AS p
+            JOIN types AS t ON t.id = p.id_type
+            JOIN colors AS c ON c.id = p.id_color
+            WHERE p.deleted_at IS NULL;`,
         );
 
         return res.rows;
@@ -91,6 +100,7 @@ module.exports = (config) => {
         }
 
         product.updated_at = new Date();
+        product.deleted_at = null;
 
         const query = [];
         const values = [];
@@ -109,7 +119,7 @@ module.exports = (config) => {
 
         const res = await client.query(
           `UPDATE products SET ${query.join(',')} WHERE id = $${values.length}
-            RETURNING id, type, color, price, quantity, created_at, updated_at`,
+            RETURNING id, type, color, price, quantity, created_at, updated_at;`,
           values,
         );
 
@@ -126,8 +136,8 @@ module.exports = (config) => {
         if (!id) {
           throw new Error('ERROR: No product id defined');
         }
-        // await client.query('DELETE FROM products WHERE id = $1', [id]);
-        await client.query('UPDATE products SET deleted_at = $1 WHERE id = $2', [new Date(), id]);
+        // await client.query('DELETE FROM products WHERE id = $1;', [id]);
+        await client.query('UPDATE products SET deleted_at = $1 WHERE id = $2;', [new Date(), id]);
 
         return true;
       } catch (err) {

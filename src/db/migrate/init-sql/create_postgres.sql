@@ -1,13 +1,33 @@
-CREATE SEQUENCE products_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1;
+DROP TABLE IF EXISTS "products";
+DROP SEQUENCE IF EXISTS products_id_seq;
+
+
+CREATE TABLE "public"."types" (
+    "id" serial PRIMARY KEY,
+    "name" character varying(255) NOT NULL UNIQUE,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "deleted_at" timestamptz
+) WITH (oids = false);
+
+
+CREATE TABLE "public"."colors" (
+    "id" serial PRIMARY KEY,
+    "name" character varying(255) NOT NULL UNIQUE,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "deleted_at" timestamptz
+) WITH (oids = false);
+
 
 CREATE TABLE "public"."products" (
-    "id" integer DEFAULT nextval('products_id_seq') NOT NULL,
-    "type" character varying(255) NOT NULL,
-    "color" character varying(255) NOT NULL,
+    "id" serial PRIMARY KEY,
+    "id_type" integer NOT NULL CONSTRAINT "products_fk0" REFERENCES "types"("id"),
+    "id_color" integer NOT NULL CONSTRAINT "products_fk1" REFERENCES "colors"("id"),
     "price" numeric NOT NULL,
     "quantity" integer NOT NULL,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "deleted_at" timestamptz,
-    CONSTRAINT "products_product_unk" UNIQUE ("type", "color", "price")
+    CONSTRAINT "products_product_unk" UNIQUE ("id_type", "id_color", "price")
 ) WITH (oids = false);
