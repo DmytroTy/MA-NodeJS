@@ -44,8 +44,8 @@ module.exports = (config) => {
         p.updated_at = timestamp; */
 
         const p = {
-          id_type: await getID('types', type),
-          id_color: await getID('colors', color),
+          type_id: await getID('types', type),
+          color_id: await getID('colors', color),
           price,
           quantity,
           created_at: timestamp,
@@ -55,19 +55,19 @@ module.exports = (config) => {
         /* // createProduct:
         const res = await knex('products')
           .insert(p)
-          .returning(['id', 'id_type', 'id_color', 'price', 'quantity', 'created_at', 'updated_at']); */
+          .returning(['id', 'type_id', 'color_id', 'price', 'quantity', 'created_at', 'updated_at']); */
 
         // upsertProduct:
         const res = await knex('products')
           .insert(p)
-          .onConflict(['id_type', 'id_color', 'price'])
+          .onConflict(['type_id', 'color_id', 'price'])
           .merge({
             updated_at: timestamp,
             deleted_at: null,
             quantity: await (async () => {
               const old = await knex('products')
                 .select('quantity', 'deleted_at')
-                .where({ id_type: p.id_type, id_color: p.id_color, price });
+                .where({ type_id: p.type_id, color_id: p.color_id, price });
 
               if (!old[0]) return 0;
               return old[0].deleted_at ? p.quantity : old[0].quantity + p.quantity;
@@ -75,8 +75,8 @@ module.exports = (config) => {
           })
           .returning([
             'id',
-            'id_type',
-            'id_color',
+            'type_id',
+            'color_id',
             'price',
             'quantity',
             'created_at',
@@ -85,11 +85,11 @@ module.exports = (config) => {
 
         /* // upsertProduct:
         const res = await knex.raw(
-          `INSERT INTO products(id_type, id_color, price, quantity, created_at, updated_at)
+          `INSERT INTO products(type_id, color_id, price, quantity, created_at, updated_at)
             VALUES(?, ?, ?, ?, ?, ?)
             ON CONFLICT ON CONSTRAINT products_product_unk DO UPDATE
             SET quantity = products.quantity + ?, updated_at = ?
-            RETURNING id, id_type, id_color, price, quantity, created_at, updated_at;`,
+            RETURNING id, type_id, color_id, price, quantity, created_at, updated_at;`,
           [type, color, price, quantity, timestamp, timestamp, quantity, timestamp],
         ); */
 
@@ -117,8 +117,8 @@ module.exports = (config) => {
             'products.updated_at',
           )
           .select()
-          .join('types', 'types.id', '=', 'products.id_type')
-          .join('colors', 'colors.id', '=', 'products.id_color')
+          .join('types', 'types.id', '=', 'products.type_id')
+          .join('colors', 'colors.id', '=', 'products.color_id')
           .where('products.id', id)
           .whereNull('products.deleted_at');
 
@@ -142,8 +142,8 @@ module.exports = (config) => {
             'products.updated_at',
           )
           .select()
-          .join('types', 'types.id', '=', 'products.id_type')
-          .join('colors', 'colors.id', '=', 'products.id_color')
+          .join('types', 'types.id', '=', 'products.type_id')
+          .join('colors', 'colors.id', '=', 'products.color_id')
           .whereNull('products.deleted_at');
 
         return res;
@@ -166,11 +166,11 @@ module.exports = (config) => {
         product.updated_at = new Date();
         product.deleted_at = null;
         if (product.type) {
-          product.id_type = await getID('types', product.type);
+          product.type_id = await getID('types', product.type);
           delete product.type;
         }
         if (product.color) {
-          product.id_color = await getID('colors', product.color);
+          product.color_id = await getID('colors', product.color);
           delete product.color;
         }
 
@@ -179,8 +179,8 @@ module.exports = (config) => {
           .where('id', id)
           .returning([
             'id',
-            'id_type',
-            'id_color',
+            'type_id',
+            'color_id',
             'price',
             'quantity',
             'created_at',

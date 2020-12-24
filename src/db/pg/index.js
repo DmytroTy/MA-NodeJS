@@ -32,7 +32,7 @@ module.exports = (config) => {
         const timestamp = new Date();
 
         const res = await client.query(
-          `INSERT INTO products(id_type, id_color, price, quantity, created_at, updated_at)
+          `INSERT INTO products(type_id, color_id, price, quantity, created_at, updated_at)
             VALUES(
               (SELECT id FROM types WHERE name = $1),
               (SELECT id FROM colors WHERE name = $2),
@@ -43,7 +43,7 @@ module.exports = (config) => {
             )
             ON CONFLICT ON CONSTRAINT products_product_unk DO UPDATE
             SET quantity = products.quantity + $4, updated_at = $6
-            RETURNING id, id_type, id_color, price, quantity, created_at, updated_at;`,
+            RETURNING id, type_id, color_id, price, quantity, created_at, updated_at;`,
           [type, color, price, quantity, timestamp, timestamp],
         );
 
@@ -63,8 +63,8 @@ module.exports = (config) => {
         const res = await client.query(
           `SELECT p.id, t.name AS type, c.name AS color, p.price, p.quantity, p.created_at, p.updated_at
             FROM products AS p
-            JOIN types AS t ON t.id = p.id_type
-            JOIN colors AS c ON c.id = p.id_color
+            JOIN types AS t ON t.id = p.type_id
+            JOIN colors AS c ON c.id = p.color_id
             WHERE p.id = $1 AND p.deleted_at IS NULL;`,
           [id],
         );
@@ -81,8 +81,8 @@ module.exports = (config) => {
         const res = await client.query(
           `SELECT p.id, t.name AS type, c.name AS color, p.price, p.quantity, p.created_at, p.updated_at
             FROM products AS p
-            JOIN types AS t ON t.id = p.id_type
-            JOIN colors AS c ON c.id = p.id_color
+            JOIN types AS t ON t.id = p.type_id
+            JOIN colors AS c ON c.id = p.color_id
             WHERE p.deleted_at IS NULL;`,
         );
 
