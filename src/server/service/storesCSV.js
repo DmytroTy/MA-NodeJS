@@ -107,8 +107,15 @@ async function writeResultToFile(fileName, optimized) {
 }
 
 async function writeResultToDB(filePath, optimized) {
-  for (const [, product] of optimized) {
-    await db.upsertProduct(product);
+  try {
+    for (const [, product] of optimized) {
+      await db.upsertProduct(product);
+    }
+  } catch (err) {
+    if (err.code === '23502') {
+      console.log('ERROR: Type or color not exist');
+    }
+    return err;
   }
 
   fs.rm(filePath, (error) => {
@@ -143,7 +150,7 @@ function csvOptimization(fileName) {
       }
     });
 
-    streamReading.on('end', async () => {
+    streamReading.on('end', () => {
       if (global.storageIn !== 'database') {
         writeResultToFile(fileName, optimized).then(resolve).catch(reject);
       } else {
@@ -168,25 +175,25 @@ async function autoOptimizationCsv(server) {
   }
   const files = contents.filter((file) => file.isFile());
   for (let i = 0; i < files.length; i++) {
+    let isOptimized;
     try {
-      let isOptimized;
+      const filePath = path.resolve(OPTIMIZED_DIR, files[i].name);
+      await fs.promises.access(filePath);
+      isOptimized = true;
+    } catch (err) {
+      isOptimized = false;
+    }
+    if (!isOptimized)
       try {
-        const filePath = path.resolve(OPTIMIZED_DIR, files[i].name);
-        await fs.promises.access(filePath);
-        isOptimized = true;
-      } catch (error) {
-        isOptimized = false;
-      }
-      if (!isOptimized) {
         if (server.listening) await csvOptimization(files[i].name);
-      } else {
-        const filePath = path.resolve(UPLOAD_DIR, files[i].name);
-        fs.rm(filePath, (error) => {
-          if (error) console.error(`Failed to delete file ${filePath}!`, error);
-        });
+      } catch (err) {
+        console.error('CSV optimization failed!', err.message);
       }
-    } catch (error) {
-      console.error('CSV auto-optimization failed!', error);
+    else {
+      const filePath = path.resolve(UPLOAD_DIR, files[i].name);
+      fs.rm(filePath, (err) => {
+        if (err) console.error(`Failed to delete file ${filePath}!`, err);
+      });
     }
   }
 }

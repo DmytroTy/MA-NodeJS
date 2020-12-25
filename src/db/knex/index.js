@@ -7,7 +7,7 @@ module.exports = (config) => {
 
   const getID = async (table, value) => {
     const res = await knex(table).select('id').where('name', value).whereNull('deleted_at');
-    return res[0].id;
+    return res[0] ? res[0].id : null;
   };
 
   return {
