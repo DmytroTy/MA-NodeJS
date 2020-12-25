@@ -52,12 +52,6 @@ module.exports = (config) => {
           updated_at: timestamp,
         };
 
-        /* // createProduct:
-        const res = await knex('products')
-          .insert(p)
-          .returning(['id', 'type_id', 'color_id', 'price', 'quantity', 'created_at', 'updated_at']); */
-
-        // upsertProduct:
         const res = await knex('products')
           .insert(p)
           .onConflict(['type_id', 'color_id', 'price'])
@@ -82,16 +76,6 @@ module.exports = (config) => {
             'created_at',
             'updated_at',
           ]);
-
-        /* // upsertProduct:
-        const res = await knex.raw(
-          `INSERT INTO products(type_id, color_id, price, quantity, created_at, updated_at)
-            VALUES(?, ?, ?, ?, ?, ?)
-            ON CONFLICT ON CONSTRAINT products_product_unk DO UPDATE
-            SET quantity = products.quantity + ?, updated_at = ?
-            RETURNING id, type_id, color_id, price, quantity, created_at, updated_at;`,
-          [type, color, price, quantity, timestamp, timestamp, quantity, timestamp],
-        ); */
 
         console.log(`DEBUG: New product created or updated: ${JSON.stringify(res[0])}`);
         return res[0];
@@ -164,7 +148,6 @@ module.exports = (config) => {
         }
 
         product.updated_at = new Date();
-        product.deleted_at = null;
         if (product.type) {
           product.type_id = await getID('types', product.type);
           delete product.type;
@@ -177,6 +160,7 @@ module.exports = (config) => {
         const res = await knex('products')
           .update(product)
           .where('id', id)
+          .whereNull('deleted_at')
           .returning([
             'id',
             'type_id',

@@ -10,10 +10,6 @@ let intervalID;
   try {
     await db.init();
 
-    db.setType('knex');
-
-    console.log(`Now DB wrapper type is ${db.getType()}`);
-
     server = app.listen(port, host, () => {
       console.log(`Server started: ${host}:${port}`);
     });

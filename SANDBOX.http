@@ -40,7 +40,7 @@ Authorization: Basic TWFzdGVyczpBY2FkZW15
 ###
 GET http://localhost:3000/goods/1
 Authorization: Basic TWFzdGVyczpBY2FkZW15
-### Failed parameter:
+### Bad parameter:
 GET http://localhost:3000/goods/1x
 Authorization: Basic TWFzdGVyczpBY2FkZW15
 ###

@@ -100,14 +100,17 @@ module.exports = (config) => {
         }
 
         product.updated_at = new Date();
-        product.deleted_at = null;
 
         const query = [];
         const values = [];
 
         // eslint-disable-next-line no-restricted-syntax
         for (const [i, [k, v]] of Object.entries(product).entries()) {
-          query.push(`${k} = $${i + 1}`);
+          if (k === 'type' || k === 'color') {
+            query.push(`${k}_id = (SELECT id FROM ${k}s WHERE name = $${i + 1})`);
+          } else {
+            query.push(`${k} = $${i + 1}`);
+          }
           values.push(v);
         }
 
@@ -118,8 +121,9 @@ module.exports = (config) => {
         values.push(id);
 
         const res = await client.query(
-          `UPDATE products SET ${query.join(',')} WHERE id = $${values.length}
-            RETURNING id, type, color, price, quantity, created_at, updated_at;`,
+          `UPDATE products SET ${query.join(',')}
+            WHERE id = $${values.length} AND deleted_at IS NULL
+            RETURNING id, type_id, color_id, price, quantity, created_at, updated_at;`,
           values,
         );
 
