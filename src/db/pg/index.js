@@ -1,19 +1,16 @@
 const { Pool } = require('pg');
+const { checkError } = require('../checkError');
+
+const name = 'pg';
 
 module.exports = (config) => {
-  let client;
-  try {
-    client = new Pool(config);
-  } catch (err) {
-    console.error(err.message || err);
-    throw err;
-  }
+  const client = new Pool(config);
 
   return {
     testConnection: async () => {
       try {
-        console.log('hello from pg testConnection');
-        await client.query('SELECT NOW()');
+        console.log(`hello from ${name} testConnection`);
+        await client.query('SELECT NOW();');
       } catch (err) {
         console.error(err.message || err);
         throw err;
@@ -21,7 +18,7 @@ module.exports = (config) => {
     },
 
     close: async () => {
-      console.log('INFO: Closing pg DB wrapper');
+      console.log(`INFO: Closing ${name} DB wrapper`);
       client.end();
     },
 
@@ -36,11 +33,18 @@ module.exports = (config) => {
         const timestamp = new Date();
 
         const res = await client.query(
-          `INSERT INTO products(type, color, price, quantity, created_at, updated_at)
-            VALUES($1, $2, $3, $4, $5, $6)
+          `INSERT INTO products(type_id, color_id, price, quantity, created_at, updated_at)
+            VALUES(
+              (SELECT id FROM types WHERE name = $1),
+              (SELECT id FROM colors WHERE name = $2),
+              $3,
+              $4,
+              $5,
+              $6
+            )
             ON CONFLICT ON CONSTRAINT products_product_unk DO UPDATE
             SET quantity = products.quantity + $4, updated_at = $6
-            RETURNING id, type, color, price, quantity, created_at, updated_at`,
+            RETURNING id, type_id, color_id, price, quantity, created_at, updated_at;`,
           [type, color, price, quantity, timestamp, timestamp],
         );
 
@@ -48,7 +52,7 @@ module.exports = (config) => {
         return res.rows[0];
       } catch (err) {
         console.error(err.message || err);
-        throw err;
+        throw checkError(err);
       }
     },
 
@@ -58,8 +62,11 @@ module.exports = (config) => {
           throw new Error('ERROR: No product id defined');
         }
         const res = await client.query(
-          `SELECT id, type, color, price, quantity, created_at, updated_at
-            FROM products WHERE id = $1 AND deleted_at IS NULL`,
+          `SELECT p.id, t.name AS type, c.name AS color, p.price, p.quantity, p.created_at, p.updated_at
+            FROM products AS p
+            JOIN types AS t ON t.id = p.type_id
+            JOIN colors AS c ON c.id = p.color_id
+            WHERE p.id = $1 AND p.deleted_at IS NULL;`,
           [id],
         );
 
@@ -73,8 +80,11 @@ module.exports = (config) => {
     getAllProducts: async () => {
       try {
         const res = await client.query(
-          `SELECT id, type, color, price, quantity, created_at, updated_at
-            FROM products WHERE deleted_at IS NULL`,
+          `SELECT p.id, t.name AS type, c.name AS color, p.price, p.quantity, p.created_at, p.updated_at
+            FROM products AS p
+            JOIN types AS t ON t.id = p.type_id
+            JOIN colors AS c ON c.id = p.color_id
+            WHERE p.deleted_at IS NULL;`,
         );
 
         return res.rows;
@@ -97,7 +107,11 @@ module.exports = (config) => {
 
         // eslint-disable-next-line no-restricted-syntax
         for (const [i, [k, v]] of Object.entries(product).entries()) {
-          query.push(`${k} = $${i + 1}`);
+          if (k === 'type' || k === 'color') {
+            query.push(`${k}_id = (SELECT id FROM ${k}s WHERE name = $${i + 1})`);
+          } else {
+            query.push(`${k} = $${i + 1}`);
+          }
           values.push(v);
         }
 
@@ -108,8 +122,9 @@ module.exports = (config) => {
         values.push(id);
 
         const res = await client.query(
-          `UPDATE products SET ${query.join(',')} WHERE id = $${values.length}
-            RETURNING id, type, color, price, quantity, created_at, updated_at`,
+          `UPDATE products SET ${query.join(',')}
+            WHERE id = $${values.length} AND deleted_at IS NULL
+            RETURNING id, type_id, color_id, price, quantity, created_at, updated_at;`,
           values,
         );
 
@@ -117,7 +132,7 @@ module.exports = (config) => {
         return res.rows[0];
       } catch (err) {
         console.error(err.message || err);
-        throw err;
+        throw checkError(err);
       }
     },
 
@@ -126,8 +141,8 @@ module.exports = (config) => {
         if (!id) {
           throw new Error('ERROR: No product id defined');
         }
-        // await client.query('DELETE FROM products WHERE id = $1', [id]);
-        await client.query('UPDATE products SET deleted_at = $1 WHERE id = $2', [new Date(), id]);
+        // await client.query('DELETE FROM products WHERE id = $1;', [id]);
+        await client.query('UPDATE products SET deleted_at = $1 WHERE id = $2;', [new Date(), id]);
 
         return true;
       } catch (err) {
