@@ -4,7 +4,14 @@
   "description": "homeworks",
   "main": "src/app.js",
   "scripts": {
-    "start": "node src/app.js"
+    "start": "node src/app.js",
+    "sequelize:migrate:make": "./node_modules/.bin/sequelize --migrations-path=./src/db/sequelize/migrations/ migration:generate --name",
+    "sequelize:migrate:latest": "./node_modules/.bin/sequelize --migrations-path=./src/db/sequelize/migrations/ --config=./src/db/sequelize/config/config.js db:migrate",
+    "sequelize:migrate:undo": "./node_modules/.bin/sequelize --migrations-path=./src/db/sequelize/migrations/ --config=./src/db/sequelize/config/config.js db:migrate:undo",
+    "knex:migrate:make": "./node_modules/.bin/knex --knexfile=./src/db/knex/knexfile.js migrate:make",
+    "knex:migrate:latest": "./node_modules/.bin/knex --knexfile=./src/db/knex/knexfile.js migrate:latest",
+    "knex:migrate:up": "./node_modules/.bin/knex --knexfile=./src/db/knex/knexfile.js migrate:up",
+    "knex:migrate:down": "./node_modules/.bin/knex --knexfile=./src/db/knex/knexfile.js migrate:down"
   },
   "repository": {
     "type": "git",
@@ -24,7 +31,9 @@
     "express-basic-auth": "^1.2.0",
     "knex": "^0.21.14",
     "nanoid": "^3.1.18",
-    "pg": "^8.5.1"
+    "pg": "^8.5.1",
+    "sequelize": "^6.3.5",
+    "sequelize-cli": "^6.2.0"
   },
   "devDependencies": {
     "eslint": "^7.12.0",
