@@ -26,6 +26,26 @@ module.exports = (config) => {
     }
   });
 
+  const getTypeID = async (type) => {
+    const res = await db.type.findOne({
+      where: {
+        name: type,
+        deletedAt: { [Sequelize.Op.is]: null },
+      },
+    });
+    return res ? res.id : null;
+  };
+
+  const getColorID = async (color) => {
+    const res = await db.color.findOne({
+      where: {
+        name: color,
+        deletedAt: { [Sequelize.Op.is]: null },
+      },
+    });
+    return res ? res.id : null;
+  };
+
   return {
     testConnection: async () => {
       try {
@@ -60,32 +80,37 @@ module.exports = (config) => {
         p.updated_at = timestamp; */
 
         const p = {
-          type_id: (
-            await db.type.findOne({
-              where: {
-                name: type,
-                deletedAt: { [Sequelize.Op.is]: null },
-              },
-            })
-          ).id,
-          color_id: (
-            await db.color.findOne({
-              where: {
-                name: color,
-                deletedAt: { [Sequelize.Op.is]: null },
-              },
-            })
-          ).id,
+          type_id: await getTypeID(type),
+          color_id: await getColorID(color),
           price,
           quantity,
-          created_at: timestamp,
-          updated_at: timestamp,
+          createdAt: timestamp,
+          updatedAt: timestamp,
         };
 
-        const res = await db.product.create(p);
+        const old = await db.product.findOne({
+          where: {
+            type_id: p.type_id,
+            color_id: p.color_id,
+            price,
+          },
+        });
 
-        console.log(`DEBUG: New product created or updated: ${JSON.stringify(res)}`);
-        return res;
+        let res;
+        if (!old) {
+          res = await db.product.create(p);
+
+          console.log(`DEBUG: New product created: ${JSON.stringify(res)}`);
+          return res;
+        }
+
+        if (old.deletedAt) p.deletedAt = null;
+        else p.quantity = old.quantity + p.quantity;
+
+        res = await db.product.update(p, { where: { id: old.id }, returning: true });
+
+        console.log(`DEBUG: Product updated: ${JSON.stringify(res[1][0])}`);
+        return res[1][0];
       } catch (err) {
         console.error(err.message || err);
         throw err;
@@ -136,27 +161,13 @@ module.exports = (config) => {
           throw new Error('ERROR: Nothing to update');
         }
 
-        product.updated_at = new Date();
+        product.updatedAt = new Date();
         if (product.type) {
-          product.type_id = (
-            await db.type.findOne({
-              where: {
-                name: product.type,
-                deletedAt: { [Sequelize.Op.is]: null },
-              },
-            })
-          ).id;
+          product.type_id = await getTypeID(product.type);
           delete product.type;
         }
         if (product.color) {
-          product.color_id = (
-            await db.color.findOne({
-              where: {
-                name: product.color,
-                deletedAt: { [Sequelize.Op.is]: null },
-              },
-            })
-          ).id;
+          product.color_id = await getColorID(product.color);
           delete product.color;
         }
 
