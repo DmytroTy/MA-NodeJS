@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const { checkError } = require('../checkError');
 
 const name = 'pg';
 
@@ -51,7 +52,7 @@ module.exports = (config) => {
         return res.rows[0];
       } catch (err) {
         console.error(err.message || err);
-        throw err;
+        throw checkError(err);
       }
     },
 
@@ -131,7 +132,7 @@ module.exports = (config) => {
         return res.rows[0];
       } catch (err) {
         console.error(err.message || err);
-        throw err;
+        throw checkError(err);
       }
     },
 

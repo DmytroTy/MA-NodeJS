@@ -107,15 +107,8 @@ async function writeResultToFile(fileName, optimized) {
 }
 
 async function writeResultToDB(filePath, optimized) {
-  try {
-    for (const [, product] of optimized) {
-      await db.upsertProduct(product);
-    }
-  } catch (err) {
-    if (err.code === '23502') {
-      console.log('ERROR: Type or color not exist');
-    }
-    return err;
+  for (const [, product] of optimized) {
+    await db.upsertProduct(product);
   }
 
   fs.rm(filePath, (error) => {

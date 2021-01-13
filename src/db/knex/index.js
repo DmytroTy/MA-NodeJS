@@ -1,4 +1,5 @@
 const Knex = require('knex');
+const { checkError } = require('../checkError');
 
 const name = 'knex';
 
@@ -81,7 +82,7 @@ module.exports = (config) => {
         return res[0];
       } catch (err) {
         console.error(err.message || err);
-        throw err;
+        throw checkError(err);
       }
     },
 
@@ -175,7 +176,7 @@ module.exports = (config) => {
         return res[0];
       } catch (err) {
         console.error(err.message || err);
-        throw err;
+        throw checkError(err);
       }
     },
 
