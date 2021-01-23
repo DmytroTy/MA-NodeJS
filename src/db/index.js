@@ -65,4 +65,12 @@ module.exports = {
   getAllProducts: async () => funcWrapper(dbWrapper().getAllProducts)(),
   updateProduct: async (product) => funcWrapper(dbWrapper().updateProduct)(product),
   deleteProduct: async (id) => funcWrapper(dbWrapper().deleteProduct)(id),
+  createUser: async (user) => funcWrapper(dbWrapper().createUser)(user),
+  getUser: async (username) => funcWrapper(dbWrapper().getUser)(username),
+  updateUser: async (user) => funcWrapper(dbWrapper().updateUser)(user),
+  deleteUser: async (id) => funcWrapper(dbWrapper().deleteUser)(id),
+  createSession: async (session) => funcWrapper(dbWrapper().createSession)(session),
+  getSession: async (refreshToken) => funcWrapper(dbWrapper().getSession)(refreshToken),
+  updateSession: async (session) => funcWrapper(dbWrapper().updateSession)(session),
+  deleteSession: async (id) => funcWrapper(dbWrapper().deleteSession)(id),
 };

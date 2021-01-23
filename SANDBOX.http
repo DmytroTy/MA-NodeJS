@@ -1,6 +1,28 @@
 ###
+POST http://localhost:3000/auth/register HTTP/1.1
+content-type: application/json
+
+{
+  "username": "Masters",
+  "password": "Academy"
+}
+###
+POST http://localhost:3000/auth/login HTTP/1.1
+content-type: application/json
+
+{
+  "username": "Masters",
+  "password": "Academy"
+}
+###
+GET http://localhost:3000/auth/refresh-tokens
+Authorization: Bearer 5zUHwvZQ-ZqCUocxKLypOTcCKYT72h5JYwjq
+###
+GET http://localhost:3000/auth/logout
+Authorization: Bearer 5zUHwvZQ-ZqCUocxKLypOTcCKYT72h5JYwjq
+###
 GET http://localhost:3000/ping
-Authorization: Basic TWFzdGVyczpBY2FkZW15
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMTQyMDQzOCwiZXhwIjoxNjExNDIyMjM4fQ.fkV-iaahxM0PKM9ACzAqDF6NN01qKqNSSiJVzezBCvw
 ###
 GET http://localhost:3000/stores-csv
 Authorization: Basic TWFzdGVyczpBY2FkZW15

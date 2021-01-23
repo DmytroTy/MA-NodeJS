@@ -5,6 +5,7 @@ const { fatal } = require('../utils');
 const config = {
   port: Number(process.env.PORT) || 3000,
   host: process.env.HOST || 'localhost',
+  secretKey: process.env.ACCESS_TOKEN_SECRET || fatal('FATAL: ACCESS_TOKEN_SECRET is not defined'),
   INTERVAL_OPTIMIZATION: Number(process.env.INTERVAL_OPTIMIZATION) || 600000,
   STORE_FILE: process.env.STORE_FILE || './goods.json',
   UPLOAD_DIR: process.env.DIR_UPLOAD || './upload',

@@ -1,6 +1,6 @@
 const express = require('express');
 const asyncHandler = require('express-async-handler');
-const { incorrectParameters, incorrectData } = require('.');
+const { incorrectParameters, incorrectData } = require('../service');
 const db = require('../../db');
 const {
   findGoods,

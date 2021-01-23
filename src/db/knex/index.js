@@ -194,5 +194,152 @@ module.exports = (config) => {
         throw err;
       }
     },
+
+    createUser: async ({ username, password }) => {
+      try {
+        if (!username) {
+          throw new Error('ERROR: No user username defined');
+        }
+        if (!password) {
+          throw new Error('ERROR: No user password defined');
+        }
+        const timestamp = new Date();
+
+        const user = {
+          username,
+          password,
+          created_at: timestamp,
+          updated_at: timestamp,
+        };
+
+        const res = await knex('users')
+          .insert(user)
+          .returning(['id', 'username', 'password', 'created_at', 'updated_at']);
+
+        console.log(`DEBUG: New user created: ${JSON.stringify(res[0])}`);
+        return res[0];
+      } catch (err) {
+        console.error(err.message || err);
+        throw checkError(err);
+      }
+    },
+
+    getUser: async (username) => {
+      try {
+        if (!username) {
+          throw new Error('ERROR: No user username defined');
+        }
+        const res = await knex('users')
+          .select('id', 'username', 'password', 'created_at', 'updated_at')
+          .where('username', username)
+          .whereNull('deleted_at');
+
+        return res[0];
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    updateUser: async ({ id, ...user }) => {
+      try {
+        if (!id) {
+          throw new Error('ERROR: No user id defined');
+        }
+
+        if (!Object.keys(user).length) {
+          throw new Error('ERROR: Nothing to update');
+        }
+
+        user.updated_at = new Date();
+
+        const res = await knex('users')
+          .update(user)
+          .where('id', id)
+          .whereNull('deleted_at')
+          .returning(['id', 'username', 'password', 'created_at', 'updated_at']);
+
+        console.log(`DEBUG: User updated: ${JSON.stringify(res[0])}`);
+        return res[0];
+      } catch (err) {
+        console.error(err.message || err);
+        throw checkError(err);
+      }
+    },
+
+    deleteUser: async (id) => {
+      try {
+        if (!id) {
+          throw new Error('ERROR: No user id defined');
+        }
+        // await knex('users').where('id', id).del();
+        await knex('users').update('deleted_at', new Date()).where('id', id);
+
+        return true;
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    createSession: async (session) => {
+      try {
+        session.created_at = new Date();
+
+        const res = await knex('refreshSessions').insert(session).returning('*');
+
+        return res[0];
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    getSession: async (refreshToken) => {
+      try {
+        if (!refreshToken) {
+          throw new Error('ERROR: No session refreshToken defined');
+        }
+        const res = await knex('refreshSessions').where('refresh_token', refreshToken);
+
+        return res[0];
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    updateSession: async ({ id, ...session }) => {
+      try {
+        if (!id) {
+          throw new Error('ERROR: No session id defined');
+        }
+
+        if (!Object.keys(session).length) {
+          throw new Error('ERROR: Nothing to update');
+        }
+
+        const res = await knex('refreshSessions').update(session).where('id', id).returning('*');
+
+        return res[0];
+      } catch (err) {
+        console.error(err.message || err);
+        throw checkError(err);
+      }
+    },
+
+    deleteSession: async (refreshToken) => {
+      try {
+        if (!refreshToken) {
+          throw new Error('ERROR: No session refreshToken defined');
+        }
+        await knex('refreshSessions').where('refresh_token', refreshToken).del();
+
+        return true;
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
   };
 };
