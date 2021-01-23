@@ -16,6 +16,11 @@ function checkError(err) {
   if (err.code === PG_CODE_NOT_NULL_CONSTRAINT_WAS_VIOLATED) {
     return new DatabaseError(`ERROR: This ${err.column.slice(0, -3)} not exist`);
   }
+
+  if (err.constraint === 'users_username_unk') {
+    return new DatabaseError('ERROR: A user with the same username is already registered!');
+  }
+
   return err;
 }
 

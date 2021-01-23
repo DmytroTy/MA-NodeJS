@@ -1,8 +1,7 @@
 const fs = require('fs');
-const { incorrectData } = require('../router');
 const db = require('../../db');
 const { STORE_FILE } = require('../../config');
-const { readStorage } = require('../service');
+const { incorrectData, readStorage } = require('../service');
 const {
   task1: filterGoods,
   task2: goodsWithMaxCost,
