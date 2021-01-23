@@ -9,19 +9,9 @@ async function registerUser(req, res) {
   if (!username || !password)
     return res.status(406).json({ error: '406', message: 'Username and password is required!' });
 
-  const user = await db.createUser({ username, password });
+  await db.createUser({ username, password });
 
-  const accessToken = jwt.sign({ id: user.id }, secretKey, { expiresIn: '1800s' });
-  const refreshToken = nanoid(36);
-  const expiresIn = Date.now() + 30 * 24 * 60 * 60 * 1000;
-
-  await db.createSession({
-    user_id: user.id,
-    refresh_token: refreshToken,
-    expires_in: expiresIn,
-  });
-
-  return res.json({ accessToken, refreshToken });
+  return res.sendStatus(200);
 }
 
 async function loginUser(req, res) {
