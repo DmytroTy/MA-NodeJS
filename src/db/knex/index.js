@@ -29,7 +29,7 @@ module.exports = (config) => {
       // no close for knex
     },
 
-    upsertProduct: async ({ type, color, price = 0, quantity = 0 }) => {
+    upsertProduct: async ({ type, color, price = 0, quantity = 0, weight }) => {
       try {
         if (!type) {
           throw new Error('ERROR: No product type defined');
@@ -50,6 +50,7 @@ module.exports = (config) => {
           type_id: await getID('types', type),
           color_id: await getID('colors', color),
           price,
+          weight,
           quantity,
           created_at: timestamp,
           updated_at: timestamp,
@@ -75,6 +76,7 @@ module.exports = (config) => {
             'type_id',
             'color_id',
             'price',
+            'weight',
             'quantity',
             'created_at',
             'updated_at',
@@ -100,6 +102,7 @@ module.exports = (config) => {
             { type: 'types.name' },
             { color: 'colors.name' },
             'products.price',
+            'products.weight',
             'products.quantity',
             'products.created_at',
             'products.updated_at',
@@ -125,6 +128,7 @@ module.exports = (config) => {
             { type: 'types.name' },
             { color: 'colors.name' },
             'products.price',
+            'products.weight',
             'products.quantity',
             'products.created_at',
             'products.updated_at',
@@ -170,6 +174,7 @@ module.exports = (config) => {
             'type_id',
             'color_id',
             'price',
+            'weight',
             'quantity',
             'created_at',
             'updated_at',

@@ -35,21 +35,24 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyL
       "type_id": "00000000-0001-0000-0000-000000000000",
       "color_id": "00000001-0000-0000-0000-000000000000",
       "quantity": 3,
-      "price": 5
+      "price": 5,
+      "weight": 0.5
     },
     {
       "id": "291c81dd-3389-4267-99bf-73950049a1d5",
       "type_id": "00000000-0002-0000-0000-000000000000",
       "color_id": "00000001-0000-0000-0000-000000000000",
       "quantity": 5,
-      "price": 3
+      "price": 3,
+      "weight": 0.1
     },
     {
       "id": "b00a0919-9d77-44ca-9a40-da7dce96da33",
       "type_id": "00000000-0001-0000-0000-000000000000",
       "color_id": "00000001-0000-0000-0000-000000000000",
       "quantity": 1,
-      "price": 6
+      "price": 6,
+      "weight": 0.7
     }
   ]
 }
