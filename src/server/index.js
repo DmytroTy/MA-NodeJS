@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const auth = require('./router/auth');
+const cart = require('./router/cart');
 const goods = require('./router/goods');
 const discount = require('./router/discount');
 const storesCSV = require('./router/storesCSV');
@@ -15,6 +16,7 @@ app.use('/auth', auth);
 
 app.use(authenticateToken);
 
+app.use('/cart', cart);
 app.use('/goods', goods);
 app.use('/discount', discount);
 app.use('/stores-csv', storesCSV);

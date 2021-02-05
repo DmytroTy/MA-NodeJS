@@ -60,17 +60,27 @@ module.exports = {
 
   testConnection: async () => funcWrapper(dbWrapper().testConnection)(),
   close: async () => funcWrapper(dbWrapper().close)(),
+
   upsertProduct: async (product) => funcWrapper(dbWrapper().upsertProduct)(product),
   getProduct: async (id) => funcWrapper(dbWrapper().getProduct)(id),
   getAllProducts: async () => funcWrapper(dbWrapper().getAllProducts)(),
   updateProduct: async (product) => funcWrapper(dbWrapper().updateProduct)(product),
   deleteProduct: async (id) => funcWrapper(dbWrapper().deleteProduct)(id),
+
   createUser: async (user) => funcWrapper(dbWrapper().createUser)(user),
   getUser: async (username) => funcWrapper(dbWrapper().getUser)(username),
   updateUser: async (user) => funcWrapper(dbWrapper().updateUser)(user),
   deleteUser: async (id) => funcWrapper(dbWrapper().deleteUser)(id),
+
   createSession: async (session) => funcWrapper(dbWrapper().createSession)(session),
   getSession: async (refreshToken) => funcWrapper(dbWrapper().getSession)(refreshToken),
   updateSession: async (session) => funcWrapper(dbWrapper().updateSession)(session),
-  deleteSession: async (id) => funcWrapper(dbWrapper().deleteSession)(id),
+  deleteSession: async (refreshToken) => funcWrapper(dbWrapper().deleteSession)(refreshToken),
+
+  upsertOrder: async (id, userId, goods) => funcWrapper(dbWrapper().upsertOrder)(id, userId, goods),
+  getOrder: async (id) => funcWrapper(dbWrapper().getOrder)(id),
+  // updateOrder: async (id, goods) => funcWrapper(dbWrapper().updateOrder)(id, goods),
+  confirmateOrder: async (id) => funcWrapper(dbWrapper().confirmateOrder)(id),
+  cancelOrder: async (id) => funcWrapper(dbWrapper().cancelOrder)(id),
+  deleteOrder: async (id) => funcWrapper(dbWrapper().deleteOrder)(id),
 };

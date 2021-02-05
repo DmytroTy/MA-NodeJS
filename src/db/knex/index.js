@@ -1,5 +1,7 @@
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-restricted-syntax */
 const Knex = require('knex');
-const { checkError } = require('../checkError');
+const { checkError, DatabaseError } = require('../checkError');
 
 const name = 'knex';
 
@@ -91,6 +93,7 @@ module.exports = (config) => {
         if (!id) {
           throw new Error('ERROR: No product id defined');
         }
+
         const res = await knex('products')
           .column(
             'products.id',
@@ -203,6 +206,7 @@ module.exports = (config) => {
         if (!password) {
           throw new Error('ERROR: No user password defined');
         }
+
         const timestamp = new Date();
 
         const user = {
@@ -229,6 +233,7 @@ module.exports = (config) => {
         if (!username) {
           throw new Error('ERROR: No user username defined');
         }
+
         const res = await knex('users')
           .select('id', 'username', 'password', 'created_at', 'updated_at')
           .where('username', username)
@@ -300,6 +305,7 @@ module.exports = (config) => {
         if (!refreshToken) {
           throw new Error('ERROR: No session refreshToken defined');
         }
+
         const res = await knex('refreshSessions').where('refresh_token', refreshToken);
 
         return res[0];
@@ -333,7 +339,169 @@ module.exports = (config) => {
         if (!refreshToken) {
           throw new Error('ERROR: No session refreshToken defined');
         }
+
         await knex('refreshSessions').where('refresh_token', refreshToken).del();
+
+        return true;
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    upsertOrder: async (id, userId, goods) => {
+      try {
+        if (!userId) {
+          throw new Error('ERROR: No order userId defined');
+        }
+        if (!goods || !goods.length) {
+          throw new Error('ERROR: No order goods defined');
+        }
+
+        const timestamp = new Date();
+
+        let order = {
+          user_id: userId,
+          status: 'openly',
+          created_at: timestamp,
+          updated_at: timestamp,
+        };
+
+        await knex.transaction(async (trx) => {
+          if (id) {
+            [order] = await trx('orders')
+              .update('updated_at', new Date())
+              .where('id', id)
+              .whereNull('deleted_at')
+              .returning(['id', 'user_id', 'status', 'created_at', 'updated_at']);
+          } else {
+            [order] = await trx('orders')
+              .insert(order)
+              .returning(['id', 'user_id', 'status', 'created_at', 'updated_at']);
+          }
+
+          for (const product of goods) {
+            product.order_id = order.id;
+            product.product_id = product.id;
+            delete product.id;
+            await trx('products')
+              .decrement('quantity', product.quantity)
+              .where('id', product.product_id);
+          }
+
+          await trx('orders_products').insert(goods);
+        });
+
+        console.log(`DEBUG: New order created or updated: ${JSON.stringify(order)}`);
+        return order;
+      } catch (err) {
+        console.error(err.message || err);
+        throw checkError(err);
+      }
+    },
+
+    getOrder: async (id) => {
+      try {
+        if (!id) {
+          throw new Error('ERROR: No order id defined');
+        }
+
+        const [order] = await knex('orders')
+          .select('id', 'user_id', 'status', 'created_at', 'updated_at')
+          .where('id', id)
+          .whereNull('deleted_at');
+
+        const goods = await knex('orders_products')
+          .select('product_id', 'quantity', 'weight', 'price')
+          .where('order_id', id);
+
+        order.goods = goods;
+
+        return order;
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    confirmateOrder: async (id) => {
+      try {
+        if (!id) {
+          throw new Error('ERROR: No order id defined');
+        }
+
+        const res = await knex('orders')
+          .update({
+            updated_at: new Date(),
+            status: 'processed',
+          })
+          .where('id', id)
+          .whereNull('deleted_at')
+          .returning(['id', 'user_id', 'status', 'created_at', 'updated_at']);
+
+        console.log(`DEBUG: Order processed: ${JSON.stringify(res[0])}`);
+        return res[0];
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    cancelOrder: async (id) => {
+      try {
+        if (!id) {
+          throw new Error('ERROR: No order id defined');
+        }
+
+        let order;
+        await knex.transaction(async (trx) => {
+          const [res] = await trx('orders')
+            .select('status')
+            .where('id', id)
+            .whereNull('deleted_at');
+          if (!res || res.status !== 'openly') {
+            throw new DatabaseError(`ERROR: Order has already been ${res.status}!`);
+          }
+
+          [order] = await trx('orders')
+            .update({
+              updated_at: new Date(),
+              status: 'canceled',
+            })
+            .where('id', id)
+            .whereNull('deleted_at')
+            .returning(['id', 'user_id', 'status', 'created_at', 'updated_at']);
+
+          const goods = await trx('orders_products')
+            .select('product_id', 'quantity')
+            .where('order_id', id);
+
+          for (const product of goods) {
+            await trx('products')
+              .increment('quantity', product.quantity)
+              .where('id', product.product_id);
+          }
+        });
+
+        console.log(`DEBUG: Order canceled: ${JSON.stringify(order)}`);
+        return order;
+      } catch (err) {
+        console.error(err.message || err);
+        throw err;
+      }
+    },
+
+    deleteOrder: async (id) => {
+      try {
+        if (!id) {
+          throw new Error('ERROR: No order id defined');
+        }
+        // await knex('orders').where('id', id).del();
+        const timestamp = new Date();
+        await knex.transaction(async (trx) => {
+          await trx('orders').update('deleted_at', timestamp).where('id', id);
+          await trx('orders_products').update('deleted_at', timestamp).where('order_id', id);
+        });
 
         return true;
       } catch (err) {
