@@ -26,11 +26,6 @@ exports.up = async (knex) => {
     table.uuid('order_id').notNullable();
     table.uuid('product_id').notNullable();
     table.integer('quantity').notNullable().defaultTo(1);
-    table.decimal('weight').notNullable().defaultTo(0.5);
-    table.uuid('type_id').notNullable();
-    table.uuid('color_id').notNullable();
-    table.decimal('price').notNullable().defaultTo(0.0);
-    table.timestamp('deleted_at').nullable();
     table.foreign('order_id', 'orders_products_fk0').references('orders.id');
     table.foreign('product_id', 'orders_products_fk1').references('products.id');
     table.primary(['order_id', 'product_id'], 'orders_products_pkey');

@@ -354,11 +354,12 @@ module.exports = (config) => {
       }
     },
 
-    upsertOrder: async (id, userId, goods) => {
+    upsertOrder: async (id, userId, products) => {
       try {
         if (!userId) {
           throw new Error('ERROR: No order userId defined');
         }
+        let goods = products;
         if (!goods || !goods.length) {
           throw new Error('ERROR: No order goods defined');
         }
@@ -385,10 +386,14 @@ module.exports = (config) => {
               .returning(['id', 'user_id', 'status', 'created_at', 'updated_at']);
           }
 
+          goods = goods.map((product) => {
+            return {
+              order_id: order.id,
+              product_id: product.id,
+              quantity: product.quantity,
+            };
+          });
           for (const product of goods) {
-            product.order_id = order.id;
-            product.product_id = product.id;
-            delete product.id;
             await trx('products')
               .decrement('quantity', product.quantity)
               .where('id', product.product_id);
@@ -417,7 +422,13 @@ module.exports = (config) => {
           .whereNull('deleted_at');
 
         const goods = await knex('orders_products')
-          .select('product_id', 'quantity', 'weight', 'price')
+          .select(
+            'orders_products.product_id',
+            'orders_products.quantity',
+            'products.weight',
+            'products.price',
+          )
+          .join('products', 'products.id', '=', 'orders_products.product_id')
           .where('order_id', id);
 
         order.goods = goods;
@@ -503,10 +514,7 @@ module.exports = (config) => {
         }
         // await knex('orders').where('id', id).del();
         const timestamp = new Date();
-        await knex.transaction(async (trx) => {
-          await trx('orders').update('deleted_at', timestamp).where('id', id);
-          await trx('orders_products').update('deleted_at', timestamp).where('order_id', id);
-        });
+        await knex('orders').update('deleted_at', timestamp).where('id', id);
 
         return true;
       } catch (err) {

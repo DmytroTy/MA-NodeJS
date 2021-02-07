@@ -24,7 +24,6 @@ async function calculateShippingCost(id, sityName, res) {
       data: [shippingCost],
     },
   } = await getShippingCost(cityRecipient, totalWeight, totalPrice);
-  console.log(shippingCost);
 
   res.json({ success: true, shippingCost: shippingCost.Cost + shippingCost.CostRedelivery });
 }
