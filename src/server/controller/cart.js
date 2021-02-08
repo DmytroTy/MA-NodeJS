@@ -1,10 +1,10 @@
 const db = require('../../db');
-const { getSity, getShippingCost } = require('../../lib/api');
+const { getCity, getShippingCost } = require('../../lib/apiNovaPoshta');
 
-async function calculateShippingCost(id, sityName, res) {
-  const { data: resp } = await getSity(sityName);
+async function calculateShippingCost(id, cityName, res) {
+  const { data: resp } = await getCity(cityName);
   if (!resp.success || !resp.data[0] || !resp.data[0].Ref) {
-    res.status(406).json({ error: '406', message: '406 Incorrect sity name recived!' });
+    res.status(406).json({ error: '406', message: '406 Incorrect city name received!' });
     return;
   }
 

@@ -1,13 +1,15 @@
-const request = require('./axios');
-const { apiKey } = require('../../config');
+const request = require('./axiosNovaPoshta');
+const { apiKey, refCherkasy } = require('../../config');
 
-const getSity = (sityName) =>
+const dollarExchangeRate = 28;
+
+const getCity = (cityName) =>
   request({
     apiKey,
     modelName: 'Address',
     calledMethod: 'getCities',
     methodProperties: {
-      FindByString: sityName,
+      FindByString: cityName,
     },
   });
 
@@ -17,11 +19,11 @@ const getShippingCost = (cityRecipient, totalWeight, totalPrice) =>
     modelName: 'InternetDocument',
     calledMethod: 'getDocumentPrice',
     methodProperties: {
-      CitySender: 'db5c8902-391c-11dd-90d9-001a92567626',
+      CitySender: refCherkasy,
       CityRecipient: cityRecipient,
       Weight: totalWeight,
       ServiceType: 'WarehouseDoors',
-      Cost: totalPrice * 28,
+      Cost: totalPrice * dollarExchangeRate,
       CargoType: 'Cargo',
       SeatsAmount: 1,
       /* PackCalculate: {
@@ -30,12 +32,12 @@ const getShippingCost = (cityRecipient, totalWeight, totalPrice) =>
       }, */
       RedeliveryCalculate: {
         CargoType: 'Money',
-        Amount: totalPrice * 28,
+        Amount: totalPrice * dollarExchangeRate,
       },
     },
   });
 
 module.exports = {
-  getSity,
+  getCity,
   getShippingCost,
 };

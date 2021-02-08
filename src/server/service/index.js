@@ -52,7 +52,7 @@ async function myMapAsync(callback) {
 Array.prototype.myMapAsync = myMapAsync;
 
 function incorrectData(res) {
-  res.status(406).json({ error: '406', message: '406 Incorrect data recived!' });
+  res.status(406).json({ error: '406', message: '406 Incorrect data received!' });
 }
 
 function incorrectParameters(res) {

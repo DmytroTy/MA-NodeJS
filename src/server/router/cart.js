@@ -41,7 +41,7 @@ cart.put(
 
     let order;
     switch (req.params.action) {
-      case 'confirmate':
+      case 'confirm':
         order = await db.confirmateOrder(req.body.id);
         // await sendOrder(req.body.id);
         break;
