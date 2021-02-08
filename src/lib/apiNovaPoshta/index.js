@@ -3,6 +3,13 @@ const { apiKey, refCherkasy } = require('../../config');
 
 const dollarExchangeRate = 28;
 
+const getCities = () =>
+  request({
+    apiKey,
+    modelName: 'Address',
+    calledMethod: 'getCities',
+  });
+
 const getCity = (cityName) =>
   request({
     apiKey,
@@ -38,6 +45,7 @@ const getShippingCost = (cityRecipient, totalWeight, totalPrice) =>
   });
 
 module.exports = {
+  getCities,
   getCity,
   getShippingCost,
 };

@@ -24,6 +24,9 @@ Authorization: Bearer 5zUHwvZQ-ZqCUocxKLypOTcCKYT72h5JYwjq
 GET http://localhost:3000/ping
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMjc3MzU1MiwiZXhwIjoxNjEyNzc1MzUyfQ.SDzsG1dEDSyh862125IfmLqMXmWxpejqeXmq24UM9rg
 ### Such products are not enough in stock:
+GET http://localhost:3000/get-nova-poshta-cities
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMjc3MzU1MiwiZXhwIjoxNjEyNzc1MzUyfQ.SDzsG1dEDSyh862125IfmLqMXmWxpejqeXmq24UM9rg
+###
 POST http://localhost:3000/cart HTTP/1.1
 content-type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMjc3MzU1MiwiZXhwIjoxNjEyNzc1MzUyfQ.SDzsG1dEDSyh862125IfmLqMXmWxpejqeXmq24UM9rg
