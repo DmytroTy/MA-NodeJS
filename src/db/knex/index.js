@@ -440,7 +440,7 @@ module.exports = (config) => {
       }
     },
 
-    confirmateOrder: async (id) => {
+    confirmOrder: async (id) => {
       try {
         if (!id) {
           throw new Error('ERROR: No order id defined');

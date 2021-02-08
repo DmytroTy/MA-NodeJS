@@ -2,6 +2,7 @@ const express = require('express');
 const asyncHandler = require('express-async-handler');
 const { incorrectParameters, incorrectData } = require('../service');
 const db = require('../../db');
+const { DatabaseError } = require('../../db/checkError');
 const { calculateShippingCost } = require('../controller/cart');
 
 const cart = express.Router();
@@ -42,7 +43,7 @@ cart.put(
     let order;
     switch (req.params.action) {
       case 'confirm':
-        order = await db.confirmateOrder(req.body.id);
+        order = await db.confirmOrder(req.body.id);
         // await sendOrder(req.body.id);
         break;
       case 'cancel':
@@ -53,6 +54,21 @@ cart.put(
         return;
     }
     res.json(order);
+  }),
+);
+
+cart.delete(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    try {
+      await db.cancelOrder(req.params.id);
+    } catch (err) {
+      if (err instanceof DatabaseError) {
+        console.log(err.message);
+      } else throw err;
+    }
+    await db.deleteOrder(req.params.id);
+    res.sendStatus(204);
   }),
 );
 
