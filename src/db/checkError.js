@@ -1,5 +1,3 @@
-const PG_CODE_NOT_NULL_CONSTRAINT_WAS_VIOLATED = '23502';
-
 class DatabaseError extends Error {
   constructor(...params) {
     super(...params);
@@ -13,12 +11,21 @@ class DatabaseError extends Error {
 }
 
 function checkError(err) {
-  if (err.code === PG_CODE_NOT_NULL_CONSTRAINT_WAS_VIOLATED) {
-    return new DatabaseError(`ERROR: This ${err.column.slice(0, -3)} not exist`);
+  if (err.table === 'products') {
+    if (err.column === 'color_id') {
+      return new DatabaseError('ERROR: Such color not exist');
+    }
+    if (err.column === 'type_id') {
+      return new DatabaseError('ERROR: Such product type not exist');
+    }
   }
 
   if (err.constraint === 'users_username_unk') {
     return new DatabaseError('ERROR: A user with the same username is already registered!');
+  }
+
+  if (err.constraint === 'products_quantity_check') {
+    return new DatabaseError('ERROR: Such products are not enough in stock for this order!');
   }
 
   return err;

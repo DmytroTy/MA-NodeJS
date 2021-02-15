@@ -16,13 +16,80 @@ content-type: application/json
 }
 ###
 GET http://localhost:3000/auth/refresh-tokens
-Authorization: Bearer 5zUHwvZQ-ZqCUocxKLypOTcCKYT72h5JYwjq
+Authorization: Bearer uD8xzxTwGl9Wt_hnpH6P15qu50WQOkzOUQCI
 ###
 GET http://localhost:3000/auth/logout
 Authorization: Bearer 5zUHwvZQ-ZqCUocxKLypOTcCKYT72h5JYwjq
 ###
 GET http://localhost:3000/ping
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMTQyMDQzOCwiZXhwIjoxNjExNDIyMjM4fQ.fkV-iaahxM0PKM9ACzAqDF6NN01qKqNSSiJVzezBCvw
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMjc3MzU1MiwiZXhwIjoxNjEyNzc1MzUyfQ.SDzsG1dEDSyh862125IfmLqMXmWxpejqeXmq24UM9rg
+### Such products are not enough in stock:
+GET http://localhost:3000/get-nova-poshta-cities
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMjc3MzU1MiwiZXhwIjoxNjEyNzc1MzUyfQ.SDzsG1dEDSyh862125IfmLqMXmWxpejqeXmq24UM9rg
+###
+POST http://localhost:3000/cart HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMjc3MzU1MiwiZXhwIjoxNjEyNzc1MzUyfQ.SDzsG1dEDSyh862125IfmLqMXmWxpejqeXmq24UM9rg
+
+{
+  "goods": [
+    {
+      "id": "b00a0919-9d77-44ca-9a40-da7dce96da33",
+      "type_id": "00000000-0001-0000-0000-000000000000",
+      "color_id": "00000001-0000-0000-0000-000000000000",
+      "quantity": 2,
+      "price": 6,
+      "weight": 0.7
+    }
+  ]
+}
+###
+POST http://localhost:3000/cart HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMjc3MzU1MiwiZXhwIjoxNjEyNzc1MzUyfQ.SDzsG1dEDSyh862125IfmLqMXmWxpejqeXmq24UM9rg
+
+{
+  "goods": [
+    {
+      "id": "e58d0cec-4499-4065-ad24-ca0268abc359",
+      "type_id": "00000000-0001-0000-0000-000000000000",
+      "color_id": "00000001-0000-0000-0000-000000000000",
+      "quantity": 3,
+      "price": 5,
+      "weight": 0.5
+    },
+    {
+      "id": "291c81dd-3389-4267-99bf-73950049a1d5",
+      "type_id": "00000000-0002-0000-0000-000000000000",
+      "color_id": "00000001-0000-0000-0000-000000000000",
+      "quantity": 5,
+      "price": 3,
+      "weight": 0.1
+    },
+    {
+      "id": "b00a0919-9d77-44ca-9a40-da7dce96da33",
+      "type_id": "00000000-0001-0000-0000-000000000000",
+      "color_id": "00000001-0000-0000-0000-000000000000",
+      "quantity": 1,
+      "price": 6,
+      "weight": 0.7
+    }
+  ]
+}
+###
+GET http://localhost:3000/cart/shipping-cost?id=b767f266-c053-430c-a787-13d7c36bd24f&city=Київ
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMjc3MzU1MiwiZXhwIjoxNjEyNzc1MzUyfQ.SDzsG1dEDSyh862125IfmLqMXmWxpejqeXmq24UM9rg
+###
+PUT http://localhost:3000/cart/cancel HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMjc3MzU1MiwiZXhwIjoxNjEyNzc1MzUyfQ.SDzsG1dEDSyh862125IfmLqMXmWxpejqeXmq24UM9rg
+
+{
+  "id": "b767f266-c053-430c-a787-13d7c36bd24f"
+}
+###
+DELETE http://localhost:3000/cart/5bfae89e-f152-4831-8932-d756855c08cb
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMjc3MzU1MiwiZXhwIjoxNjEyNzc1MzUyfQ.SDzsG1dEDSyh862125IfmLqMXmWxpejqeXmq24UM9rg
 ###
 GET http://localhost:3000/stores-csv
 Authorization: Basic TWFzdGVyczpBY2FkZW15
@@ -80,7 +147,7 @@ Authorization: Basic TWFzdGVyczpBY2FkZW15
 ###
 POST http://localhost:3000/goods/new-data HTTP/1.1
 content-type: application/json
-Authorization: Basic TWFzdGVyczpBY2FkZW15
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkMDlkNzUyLWE4ZDEtNGFlMi1iZGYyLTY3NTU4NzMwNGIwOCIsImlhdCI6MTYxMjc3MzU1MiwiZXhwIjoxNjEyNzc1MzUyfQ.SDzsG1dEDSyh862125IfmLqMXmWxpejqeXmq24UM9rg
 
 [
   {
@@ -97,7 +164,7 @@ Authorization: Basic TWFzdGVyczpBY2FkZW15
   },
   {
     "type": "socks",
-    "color": "red",
+    "color": "green",
     "quantity": 10,
     "priceForPair": "$3"
   },
